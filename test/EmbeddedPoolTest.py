@@ -15,10 +15,10 @@ class MyTestCase(unittest.TestCase):
         mock_input.return_value=26
 
         # Act
-        self.es.check_temperature()
+        self.es.check_water_temperature()
 
         # Assert
-        self.assertEqual(True,)
+        self.assertEqual(True,self.es.correct_water_temperature)
 
     @patch.object(GPIO, "input")
     def test_water_temperature_2(self, mock_input):
@@ -26,7 +26,7 @@ class MyTestCase(unittest.TestCase):
         mock_input.return_value = 28
 
         # Act
-        self.es.check_temperature()
+        self.es.check_water_temperature()
 
         # Assert
-        self.assertEqual(False, self.es.correct_temperature)
+        self.assertEqual(False, self.es.correct_water_temperature)
