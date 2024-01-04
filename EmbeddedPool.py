@@ -6,19 +6,27 @@ from libs.DFRobot_ADS1115 import ADS1115
 
 
 class EmbeddedPool:
-    TEMPERATURE_WATER_PIN=11
-    TEMPERATURE_ENVIRONMENT_PIN=12
+    # Raspberry BCM GPIO pins
+    TEMPERATURE_WATER_PIN = 11
+    TEMPERATURE_ENVIRONMENT_PIN = 12
+
+    # ADC pins
+    PH_SENSOR_PIN = 0
+
     def __init__(self):
-        self.correct_water_temperature=False
-        self.current_water_temperature=-1
-        self.correct_environment_temperature=False
-        self.current_environment_temperature=-1
+        # Use Broadcom GPIO numbers
+        GPIO.setmode(GPIO.BCM)
 
         # ADC Setup
         self.ads1115 = ADS1115()
         self.ads1115.set_addr_ADS1115(0x48)
         self.ads1115.set_gain(0x00)
 
+        # Instance variables
+        self.correct_water_temperature = False
+        self.current_water_temperature = -1
+        self.correct_environment_temperature = False
+        self.current_environment_temperature = -1
 
     def check_water_temperature(self) -> None:
         result=GPIO.input(self.TEMPERATURE_WATER_PIN)
