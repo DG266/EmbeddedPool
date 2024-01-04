@@ -1,3 +1,4 @@
+from libs.DFRobot_ADS1115 import ADS1115
 from mock import GPIO
 
 
@@ -10,6 +11,11 @@ class EmbeddedPool:
         self.current_water_temperature=-1
         self.correct_environment_temperature=False
         self.current_environment_temperature=-1
+
+        # ADC Setup
+        self.ads1115 = ADS1115()
+        self.ads1115.set_addr_ADS1115(0x48)
+        self.ads1115.set_gain(0x00)
 
     def print_number(self):
         print(self.number)
