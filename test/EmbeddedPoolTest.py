@@ -1,8 +1,10 @@
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    import mock.GPIO as GPIO
 import unittest
 from unittest.mock import patch
-
 from EmbeddedPool import EmbeddedPool
-from mock import GPIO
 
 
 class MyTestCase(unittest.TestCase):

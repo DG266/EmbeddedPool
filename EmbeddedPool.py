@@ -1,5 +1,8 @@
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    import mock.GPIO as GPIO
 from libs.DFRobot_ADS1115 import ADS1115
-from mock import GPIO
 
 
 class EmbeddedPool:
