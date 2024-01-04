@@ -5,11 +5,12 @@ except ImportError:
 import unittest
 from unittest.mock import patch
 from EmbeddedPool import EmbeddedPool
+from libs.DFRobot_ADS1115 import ADS1115
 
 
 class MyTestCase(unittest.TestCase):
-    def setUp(self)->None:
-        self.es=EmbeddedPool()
+    def setUp(self) -> None:
+        self.es = EmbeddedPool()
 
     @patch.object(GPIO,"input")
     def test_water_temperature(self,mock_input):
@@ -44,3 +45,17 @@ class MyTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(True, self.es.correct_environment_temperature)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_water_ph_with_good_ph_value(self, mock_input):
+        # IMPORTANT: if the voltage is 1450 mV, the pH will be 7.28 (which is good)
+        mock_input.return_value = {'r': 1450}
+        self.es.check_water_ph()
+        self.assertEqual(True, self.es.is_acceptable_ph)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_water_ph_with_bad_ph_value(self, mock_input):
+        # IMPORTANT: if the voltage is 2000 mV, the pH will be 4.18 (which is bad)
+        mock_input.return_value = {'r': 2000}
+        self.es.check_water_ph()
+        self.assertEqual(False, self.es.is_acceptable_ph)
