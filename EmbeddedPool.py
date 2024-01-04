@@ -6,7 +6,6 @@ class EmbeddedPool:
     TEMPERATURE_WATER_PIN=11
     TEMPERATURE_ENVIRONMENT_PIN=12
     def __init__(self):
-        self.number = 7
         self.correct_water_temperature=False
         self.current_water_temperature=-1
         self.correct_environment_temperature=False
@@ -17,8 +16,6 @@ class EmbeddedPool:
         self.ads1115.set_addr_ADS1115(0x48)
         self.ads1115.set_gain(0x00)
 
-    def print_number(self):
-        print(self.number)
 
     def check_water_temperature(self) -> None:
         result=GPIO.input(self.TEMPERATURE_WATER_PIN)
