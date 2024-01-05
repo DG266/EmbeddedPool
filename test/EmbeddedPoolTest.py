@@ -59,3 +59,10 @@ class MyTestCase(unittest.TestCase):
         mock_input.return_value = 2000
         self.es.check_water_ph()
         self.assertEqual(False, self.es.is_acceptable_ph)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_water_cholorin_level(self, mock_input):
+        mock_input.return_value = 2000
+        self.es.check_cholorin_level()
+        self.assertEqual(False, self.es.is_acceptable_cholorin)
+

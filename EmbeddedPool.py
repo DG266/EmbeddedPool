@@ -13,6 +13,7 @@ class EmbeddedPool:
 
     # ADC pins
     PH_SENSOR_PIN = 0
+    CHOLORIN_SENSOR_PIN=1
 
     def __init__(self):
         # Use Broadcom GPIO numbers
@@ -33,6 +34,9 @@ class EmbeddedPool:
         self.current_environment_temperature = -1
         self.is_acceptable_ph = False
         self.water_ph = -1
+        self.is_acceptable_cholorin=False
+        self.water_cholorin=-1
+
 
     def check_water_temperature(self) -> None:
         result=GPIO.input(self.TEMPERATURE_WATER_PIN)
@@ -62,3 +66,17 @@ class EmbeddedPool:
 
         # Update the pH value in the instance variable
         self.water_ph = result
+
+    def check_cholorin_level(self) -> None:
+        # Read the voltage...
+        voltage = self.ads1115.read_voltage(self.CHOLORIN_SENSOR_PIN)
+        # Convert the voltage
+        orp_value = ((30 * voltage * 1000) - (voltage * 1000))
+
+        if orp_value > 1.5:
+            self.is_acceptable_cholorin = False
+        elif orp_value <= 1:
+            self.is_acceptable_cholorin = False
+        elif 1 <= orp_value < 1.5:
+            self.is_acceptable_cholorin = True
+
