@@ -10,10 +10,12 @@ class EmbeddedPool:
     # Raspberry BCM GPIO pins
     TEMPERATURE_WATER_PIN = 11
     TEMPERATURE_ENVIRONMENT_PIN = 12
+    HUMIDITY_PIN = 13
 
     # ADC pins
     PH_SENSOR_PIN = 0
-    CHOLORIN_SENSOR_PIN=1
+    CHOLORIN_SENSOR_PIN = 1
+
 
     def __init__(self):
         # Use Broadcom GPIO numbers
@@ -35,7 +37,9 @@ class EmbeddedPool:
         self.is_acceptable_ph = False
         self.water_ph = -1
         self.is_acceptable_cholorin=False
-        self.water_cholorin=-1
+        self.water_cholorin = -1
+        self.correct_humidity = False
+        self.humidity_level = -1
 
 
     def check_water_temperature(self) -> None:
@@ -80,3 +84,9 @@ class EmbeddedPool:
         elif 1 <= orp_value < 1.5:
             self.is_acceptable_cholorin = True
 
+    def check_humidity_level(self) -> None:
+        result = GPIO.input(self.HUMIDITY_PIN)
+        if 25.56 <= result <= 29.44:
+            self.correct_humidity = True
+        else:
+            self.correct_humidity = False
