@@ -216,7 +216,8 @@ class ADS1115():
 		if raw_adc > 32767:
 			raw_adc -= 65535
 		raw_adc = int(float(raw_adc)*coefficient)
-		return {'r' : raw_adc}
+		# return {'r' : raw_adc}
+		return raw_adc
 
 	def read_voltage(self,channel):
 		'''!

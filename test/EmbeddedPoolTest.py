@@ -49,13 +49,13 @@ class MyTestCase(unittest.TestCase):
     @patch.object(ADS1115, "read_voltage")
     def test_check_water_ph_with_good_ph_value(self, mock_input):
         # IMPORTANT: if the voltage is 1450 mV, the pH will be 7.28 (which is good)
-        mock_input.return_value = {'r': 1450}
+        mock_input.return_value = 1450
         self.es.check_water_ph()
         self.assertEqual(True, self.es.is_acceptable_ph)
 
     @patch.object(ADS1115, "read_voltage")
     def test_check_water_ph_with_bad_ph_value(self, mock_input):
         # IMPORTANT: if the voltage is 2000 mV, the pH will be 4.18 (which is bad)
-        mock_input.return_value = {'r': 2000}
+        mock_input.return_value = 2000
         self.es.check_water_ph()
         self.assertEqual(False, self.es.is_acceptable_ph)

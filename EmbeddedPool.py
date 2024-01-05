@@ -51,7 +51,7 @@ class EmbeddedPool:
 
     def check_water_ph(self) -> None:
         # Read the voltage from the ADC (where the pH probe is connected)
-        voltage = self.ads1115.read_voltage(self.PH_SENSOR_PIN)['r']
+        voltage = self.ads1115.read_voltage(self.PH_SENSOR_PIN)
         # Use the DFRobot pH library to convert voltage to pH
         result = self.ph_helper.read_PH(voltage, None)
 
