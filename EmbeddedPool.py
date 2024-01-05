@@ -32,6 +32,7 @@ class EmbeddedPool:
         self.correct_environment_temperature = False
         self.current_environment_temperature = -1
         self.is_acceptable_ph = False
+        self.water_ph = -1
 
     def check_water_temperature(self) -> None:
         result=GPIO.input(self.TEMPERATURE_WATER_PIN)
@@ -59,3 +60,5 @@ class EmbeddedPool:
         else:
             self.is_acceptable_ph = False
 
+        # Update the pH value in the instance variable
+        self.water_ph = result
