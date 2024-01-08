@@ -109,9 +109,11 @@ class EmbeddedPool:
         if not self.correct_humidity:
             # Use servo motor to open the windows
             self.change_servo_angle(self.DC_OPEN)
+            self.are_windows_open = True
         else:
             # Use servo motor to close the windows
             self.change_servo_angle(self.DC_CLOSED)
+            self.are_windows_open = False
 
     def change_servo_angle(self, duty_cycle: float) -> None:
         GPIO.output(self.SERVO_PIN, GPIO.HIGH)
