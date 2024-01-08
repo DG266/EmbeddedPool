@@ -1,3 +1,5 @@
+import time
+
 try:
     import RPi.GPIO as GPIO
     import Adafruit_DHT
@@ -13,11 +15,15 @@ class EmbeddedPool:
     TEMPERATURE_WATER_PIN = 11
     TEMPERATURE_ENVIRONMENT_PIN = 12
     HUMIDITY_PIN = 13
+    SERVO_PIN = 14
 
     # ADC pins
     PH_SENSOR_PIN = 0
     CHOLORIN_SENSOR_PIN = 1
 
+    # Servo motor stuff
+    DC_OPEN = (180 / 18) + 2
+    DC_CLOSED = (0 / 18) + 2
 
     def __init__(self):
         # Use Broadcom GPIO numbers
@@ -32,6 +38,11 @@ class EmbeddedPool:
         # pH sensor setup
         self.ph_helper = DFRobot_PH()
 
+        # Servo motor setup
+        self.servo = GPIO.PWM(self.SERVO_PIN, 50)
+        self.servo.start(0)
+        self.servo.ChangeDutyCycle(2)
+
         # Instance variables
         self.correct_water_temperature = None
         self.current_water_temperature = None
@@ -43,6 +54,7 @@ class EmbeddedPool:
         self.water_cholorin = None
         self.correct_humidity = None
         self.humidity_level = None
+        self.are_windows_open = None
 
     def check_water_temperature(self) -> None:
         result=GPIO.input(self.TEMPERATURE_WATER_PIN)
@@ -92,3 +104,18 @@ class EmbeddedPool:
             self.correct_humidity = True
         else:
             self.correct_humidity = False
+
+    def control_windows(self) -> None:
+        if not self.correct_humidity:
+            # Use servo motor to open the windows
+            self.change_servo_angle(self.DC_OPEN)
+        else:
+            # Use servo motor to close the windows
+            self.change_servo_angle(self.DC_CLOSED)
+
+    def change_servo_angle(self, duty_cycle: float) -> None:
+        GPIO.output(self.SERVO_PIN, GPIO.HIGH)
+        self.servo.ChangeDutyCycle(duty_cycle)
+        time.sleep(1)
+        GPIO.output(self.SERVO_PIN, GPIO.LOW)
+        self.servo.ChangeDutyCycle(0)
