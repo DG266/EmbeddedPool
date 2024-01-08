@@ -30,17 +30,16 @@ class EmbeddedPool:
         self.ph_helper = DFRobot_PH()
 
         # Instance variables
-        self.correct_water_temperature = False
-        self.current_water_temperature = -1
-        self.correct_environment_temperature = False
-        self.current_environment_temperature = -1
-        self.is_acceptable_ph = False
-        self.water_ph = -1
-        self.is_acceptable_cholorin=False
-        self.water_cholorin = -1
-        self.correct_humidity = False
-        self.humidity_level = -1
-
+        self.correct_water_temperature = None
+        self.current_water_temperature = None
+        self.correct_environment_temperature = None
+        self.current_environment_temperature = None
+        self.is_acceptable_ph = None
+        self.water_ph = None
+        self.is_acceptable_cholorin=None
+        self.water_cholorin = None
+        self.correct_humidity = None
+        self.humidity_level = None
 
     def check_water_temperature(self) -> None:
         result=GPIO.input(self.TEMPERATURE_WATER_PIN)
