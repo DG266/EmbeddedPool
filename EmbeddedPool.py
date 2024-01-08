@@ -52,7 +52,7 @@ class EmbeddedPool:
             self.correct_water_temperature=False
 
     def check_environment_temperature(self) -> None:
-        hunidity,temperature_environment=Adafruit_DHT.read_retry(self.dht11,self.TEMPERATURE_ENVIRONMENT_PIN)
+        humidity,temperature_environment=Adafruit_DHT.read_retry(self.dht11,self.TEMPERATURE_ENVIRONMENT_PIN)
         if temperature_environment > (self.current_water_temperature + 2):
             # Environment temperature is too high
             self.correct_environment_temperature=False
@@ -87,8 +87,8 @@ class EmbeddedPool:
             self.is_acceptable_cholorin = True
 
     def check_humidity_level(self) -> None:
-        result = GPIO.input(self.HUMIDITY_PIN)
-        if 25.56 <= result <= 29.44:
+        humidity, environment_temperature = Adafruit_DHT.read_retry(self.dht11, self.TEMPERATURE_ENVIRONMENT_PIN)
+        if 25.56 <= humidity <= 29.44:
             self.correct_humidity = True
         else:
             self.correct_humidity = False

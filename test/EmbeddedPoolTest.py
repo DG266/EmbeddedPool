@@ -68,10 +68,10 @@ class MyTestCase(unittest.TestCase):
         self.es.check_cholorin_level()
         self.assertEqual(False, self.es.is_acceptable_cholorin)
 
-    @patch.object(GPIO, "input")
+    @patch.object(Adafruit_DHT, "read_retry")
     def test_humidity_level(self, mock_input):
         # Arrange
-        mock_input.return_value = 27
+        mock_input.return_value = [27, 28]
 
         # Act
         self.es.check_humidity_level()
@@ -79,10 +79,10 @@ class MyTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(True, self.es.correct_humidity)
 
-    @patch.object(GPIO, "input")
+    @patch.object(Adafruit_DHT, "read_retry")
     def test_humidity_level_2(self, mock_input):
         # Arrange
-        mock_input.return_value = 40
+        mock_input.return_value = [40, 28]
 
         # Act
         self.es.check_humidity_level()
