@@ -90,6 +90,8 @@ class MyTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(False, self.es.correct_humidity)
 
+
+
     @patch.object(Adafruit_DHT, "read_retry")
     def test_control_windows_with_humidity_too_high(self, mock_input):
         # First value - humidity | Second value - env. temp.
@@ -99,3 +101,15 @@ class MyTestCase(unittest.TestCase):
         self.es.control_windows()
 
         self.assertEqual(True, self.es.are_windows_open)
+
+    @patch.object(Adafruit_DHT, "read_retry")
+    def test_control_windows_with_humidity_correct(self, mock_input):
+        # First value - humidity | Second value - env. temp.
+        mock_input.return_value = [29.94, 27.7]
+
+        self.es.check_humidity_level()
+        self.es.control_windows()
+
+        self.assertEqual(False, self.es.are_windows_open)
+
+

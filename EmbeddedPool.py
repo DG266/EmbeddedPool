@@ -100,7 +100,7 @@ class EmbeddedPool:
 
     def check_humidity_level(self) -> None:
         humidity, environment_temperature = Adafruit_DHT.read_retry(self.dht11, self.TEMPERATURE_ENVIRONMENT_PIN)
-        if 25.56 <= humidity <= 29.44:
+        if 25.56 <= humidity <= 29.94:
             self.correct_humidity = True
         else:
             self.correct_humidity = False
