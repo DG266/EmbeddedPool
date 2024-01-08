@@ -1,7 +1,9 @@
 try:
     import RPi.GPIO as GPIO
+    import Adafruit_DHT
 except ImportError:
     import mock.GPIO as GPIO
+    import mock.Adafruit_DHT as Adafruit_DHT
 from libs.DFRobot_ADS1115 import ADS1115
 from libs.DFRobot_PH import DFRobot_PH
 
@@ -25,6 +27,7 @@ class EmbeddedPool:
         self.ads1115 = ADS1115()
         self.ads1115.set_addr_ADS1115(0x48)
         self.ads1115.set_gain(0x00)
+        self.dht11=Adafruit_DHT.DHT11
 
         # pH sensor setup
         self.ph_helper = DFRobot_PH()
@@ -49,11 +52,11 @@ class EmbeddedPool:
             self.correct_water_temperature=False
 
     def check_environment_temperature(self) -> None:
-        result=GPIO.input(self.TEMPERATURE_ENVIRONMENT_PIN)
-        if result > (self.current_water_temperature + 2):
+        hunidity,temperature_environment=Adafruit_DHT.read_retry(self.dht11,self.TEMPERATURE_ENVIRONMENT_PIN)
+        if temperature_environment > (self.current_water_temperature + 2):
             # Environment temperature is too high
             self.correct_environment_temperature=False
-        elif result <= (self.current_water_temperature + 2):
+        elif temperature_environment <= (self.current_water_temperature + 2):
             self.correct_environment_temperature=True
 
     def check_water_ph(self) -> None:

@@ -1,7 +1,9 @@
 try:
     import RPi.GPIO as GPIO
+    import Adafruit_DHT
 except ImportError:
     import mock.GPIO as GPIO
+    import mock.Adafruit_DHT as Adafruit_DHT
 import unittest
 from unittest.mock import patch
 from EmbeddedPool import EmbeddedPool
@@ -34,10 +36,10 @@ class MyTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(False, self.es.correct_water_temperature)
 
-    @patch.object(GPIO, "input")
+    @patch.object(Adafruit_DHT,"read_retry")
     def test_environment_temperature(self, mock_input):
         # Arrange
-        mock_input.return_value = 28
+        mock_input.return_value = [25,28]
         self.es.current_water_temperature = 26
 
         # Act
