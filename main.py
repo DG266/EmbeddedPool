@@ -21,5 +21,6 @@ if __name__ == '__main__':
 		embedded_system.turn_on_lcd_backlight()
 		loop()
 	except KeyboardInterrupt:
+		embedded_system.lcd_clear()
 		embedded_system.turn_off_lcd_backlight()
 		GPIO.cleanup()

@@ -6,6 +6,7 @@ except ImportError:
     import mock.Adafruit_DHT as Adafruit_DHT
 import unittest
 from LCDError import LCDError
+from DHTError import DHTError
 from unittest.mock import patch
 from EmbeddedPool import EmbeddedPool
 from libs.DFRobot_ADS1115 import ADS1115
@@ -32,14 +33,72 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(False, self.ep.correct_water_temperature)
 
     @patch.object(Adafruit_DHT, "read_retry")
-    def test_check_environment_temperature(self, mock_read_retry):
+    @patch.object(GPIO, "input")
+    def test_check_environment_temperature_and_humidity_with_both_correct(self, mock_input, mock_read_retry):
+        # Water temperature
+        mock_input.return_value = 26.00
         # Adafruit_DHT.read_retry returns (humidity, temperature)
-        mock_read_retry.return_value = [25, 28]
-        self.ep.current_water_temperature = 26
+        mock_read_retry.return_value = [27.00, 28.00]
 
-        self.ep.check_environment_temperature()
+        self.ep.check_water_temperature()
+        self.ep.check_environment_temperature_and_humidity()
 
+        self.assertEqual(True, self.ep.correct_humidity)
         self.assertEqual(True, self.ep.correct_environment_temperature)
+
+    @patch.object(Adafruit_DHT, "read_retry")
+    @patch.object(GPIO, "input")
+    def test_check_environment_temperature_and_humidity_with_both_wrong(self, mock_input, mock_read_retry):
+        # Water temperature
+        mock_input.return_value = 26.00
+        # Adafruit_DHT.read_retry returns (humidity, temperature)
+        mock_read_retry.return_value = [30.00, 29.00]
+
+        self.ep.check_water_temperature()
+        self.ep.check_environment_temperature_and_humidity()
+
+        self.assertEqual(False, self.ep.correct_humidity)
+        self.assertEqual(False, self.ep.correct_environment_temperature)
+
+    @patch.object(Adafruit_DHT, "read_retry")
+    @patch.object(GPIO, "input")
+    def test_check_environment_temperature_and_humidity_with_wrong_temperature(self, mock_input, mock_read_retry):
+        # Water temperature
+        mock_input.return_value = 26.00
+        # Adafruit_DHT.read_retry returns (humidity, temperature)
+        mock_read_retry.return_value = [27.00, 30.00]
+
+        self.ep.check_water_temperature()
+        self.ep.check_environment_temperature_and_humidity()
+
+        self.assertEqual(True, self.ep.correct_humidity)
+        self.assertEqual(False, self.ep.correct_environment_temperature)
+
+    @patch.object(Adafruit_DHT, "read_retry")
+    @patch.object(GPIO, "input")
+    def test_check_environment_temperature_and_humidity_with_wrong_humidity(self, mock_input, mock_read_retry):
+        # Water temperature
+        mock_input.return_value = 26.00
+        # Adafruit_DHT.read_retry returns (humidity, temperature)
+        mock_read_retry.return_value = [40.00, 28.00]
+
+        self.ep.check_water_temperature()
+        self.ep.check_environment_temperature_and_humidity()
+
+        self.assertEqual(False, self.ep.correct_humidity)
+        self.assertEqual(True, self.ep.correct_environment_temperature)
+
+    @patch.object(Adafruit_DHT, "read_retry")
+    @patch.object(GPIO, "input")
+    def test_check_environment_temperature_and_humidity_with_failed_reading(self, mock_input, mock_read_retry):
+        # Water temperature
+        mock_input.return_value = 26.00
+        # Adafruit_DHT.read_retry returns (humidity, temperature)
+        mock_read_retry.return_value = [None, None]
+
+        self.ep.check_water_temperature()
+
+        self.assertRaises(DHTError, self.ep.check_environment_temperature_and_humidity)
 
     @patch.object(ADS1115, "read_voltage")
     def test_check_water_ph_with_good_ph_value(self, mock_read_voltage):
@@ -68,37 +127,29 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(False, self.ep.is_acceptable_cholorin)
 
     @patch.object(Adafruit_DHT, "read_retry")
-    def test_check_humidity_level_with_good_humidity(self, mock_read_retry):
-        mock_read_retry.return_value = [27, 28]
-
-        self.ep.check_humidity_level()
-
-        self.assertEqual(True, self.ep.correct_humidity)
-
-    @patch.object(Adafruit_DHT, "read_retry")
-    def test_check_humidity_level_with_humidity_too_high(self, mock_read_retry):
-        mock_read_retry.return_value = [40, 28]
-
-        self.ep.check_humidity_level()
-
-        self.assertEqual(False, self.ep.correct_humidity)
-
-    @patch.object(Adafruit_DHT, "read_retry")
-    def test_control_windows_with_humidity_too_high(self, mock_read_retry):
+    @patch.object(GPIO, "input")
+    def test_control_windows_with_humidity_too_high(self, mock_input, mock_read_retry):
+        # Water temperature
+        mock_input.return_value = 26.00
         # Adafruit_DHT.read_retry returns (humidity, temperature)
-        mock_read_retry.return_value = [31, 28]
+        mock_read_retry.return_value = [31.50, 28.00]
 
-        self.ep.check_humidity_level()
+        self.ep.check_water_temperature()
+        self.ep.check_environment_temperature_and_humidity()
         self.ep.control_windows()
 
         self.assertEqual(True, self.ep.are_windows_open)
 
     @patch.object(Adafruit_DHT, "read_retry")
-    def test_control_windows_with_good_humidity(self, mock_read_retry):
+    @patch.object(GPIO, "input")
+    def test_control_windows_with_good_humidity(self, mock_input, mock_read_retry):
+        # Water temperature
+        mock_input.return_value = 26.00
         # Adafruit_DHT.read_retry returns (humidity, temperature)
-        mock_read_retry.return_value = [29.94, 27.7]
+        mock_read_retry.return_value = [29.94, 27.70]
 
-        self.ep.check_humidity_level()
+        self.ep.check_water_temperature()
+        self.ep.check_environment_temperature_and_humidity()
         self.ep.control_windows()
 
         self.assertEqual(False, self.ep.are_windows_open)

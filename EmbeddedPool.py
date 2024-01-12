@@ -6,6 +6,7 @@ except ImportError:
     import mock.Adafruit_DHT as Adafruit_DHT
 import time
 from LCDError import LCDError
+from DHTError import DHTError
 from libs.DFRobot_ADS1115 import ADS1115
 from libs.DFRobot_PH import DFRobot_PH
 from libs.PCF8574 import PCF8574_GPIO
@@ -27,7 +28,7 @@ class EmbeddedPool:
     DC_OPEN = (180 / 18) + 2
     DC_CLOSED = (0 / 18) + 2
 
-    # Values
+    # Thresholds
     WATER_TEMP_MIN = 25.5
     WATER_TEMP_MAX = 27.7
     HUMIDITY_MIN = 25.56
@@ -40,8 +41,8 @@ class EmbeddedPool:
     TURBIDITY_MAX = 0.5
 
     def __init__(self):
-        # Use Broadcom GPIO numbers
-        GPIO.setmode(GPIO.BCM)
+        GPIO.setmode(GPIO.BCM)  # Use Broadcom GPIO numbers
+        GPIO.setwarnings(True)
 
         # ADC setup
         self.ads1115 = ADS1115()
@@ -64,35 +65,49 @@ class EmbeddedPool:
         self.pcf = PCF8574_GPIO(0x27)
         self.lcd = Adafruit_CharLCD(pin_rs=0, pin_e=2, pins_db=[4, 5, 6, 7], GPIO=self.pcf)
 
-        # Instance variables
+        # Instance variables - booleans
         self.correct_water_temperature = None
-        self.current_water_temperature = None
-        self.correct_environment_temperature = None
-        self.current_environment_temperature = None
-        self.is_acceptable_ph = None
-        self.water_ph = None
-        self.is_acceptable_cholorin = None
-        self.water_cholorin = None
         self.correct_humidity = None
-        self.humidity_level = None
+        self.correct_environment_temperature = None
+        self.is_acceptable_ph = None
+        self.is_acceptable_cholorin = None
         self.is_acceptable_turbidity = None
-        self.current_turbidity = None
+
         self.are_windows_open = None
         self.is_lcd_backlight_on = None
 
+        # Instance variables - values
+        self.water_temperature = None
+        self.humidity = None
+        self.environment_temperature = None
+        self.water_ph = None
+        self.water_cholorin = None
+        self.water_turbidity = None
+
     def check_water_temperature(self) -> None:
-        result = GPIO.input(self.TEMPERATURE_WATER_PIN)
-        if self.WATER_TEMP_MIN <= result <= self.WATER_TEMP_MAX:
+        self.water_temperature = GPIO.input(self.TEMPERATURE_WATER_PIN)
+        if self.WATER_TEMP_MIN <= self.water_temperature <= self.WATER_TEMP_MAX:
             self.correct_water_temperature = True
         else:
             self.correct_water_temperature = False
 
-    def check_environment_temperature(self) -> None:
-        humidity, temperature_environment = Adafruit_DHT.read_retry(self.dht_type, self.DHT_PIN)
-        if temperature_environment > (self.current_water_temperature + 2):
-            self.correct_environment_temperature = False
-        elif temperature_environment <= (self.current_water_temperature + 2):
-            self.correct_environment_temperature = True
+    def check_environment_temperature_and_humidity(self) -> None:
+        self.humidity, self.environment_temperature = Adafruit_DHT.read_retry(self.dht_type, self.DHT_PIN)
+
+        # You should always check water temperature before proceeding
+
+        if self.humidity is not None and self.environment_temperature is not None:
+            if self.environment_temperature > (self.water_temperature + 2):
+                self.correct_environment_temperature = False
+            elif self.environment_temperature <= (self.water_temperature + 2):
+                self.correct_environment_temperature = True
+
+            if self.HUMIDITY_MIN <= self.humidity <= self.HUMIDITY_MAX:
+                self.correct_humidity = True
+            else:
+                self.correct_humidity = False
+        else:
+            raise DHTError("Failed to read from DHT sensor.")
 
     def check_water_ph(self) -> None:
         # Read the voltage from the ADC (where the pH probe is connected)
@@ -119,13 +134,6 @@ class EmbeddedPool:
         elif self.CHLORINE_MIN <= orp_value < self.CHLORINE_MAX:
             self.is_acceptable_cholorin = True
 
-    def check_humidity_level(self) -> None:
-        humidity, environment_temperature = Adafruit_DHT.read_retry(self.dht_type, self.DHT_PIN)
-        if self.HUMIDITY_MIN <= humidity <= self.HUMIDITY_MAX:
-            self.correct_humidity = True
-        else:
-            self.correct_humidity = False
-
     def check_turbidity(self) -> None:
         # See https://wiki.dfrobot.com/Turbidity_sensor_SKU__SEN0189
         voltage = self.ads1115.read_voltage(self.TURBIDITY_SENSOR_PIN)
@@ -136,11 +144,11 @@ class EmbeddedPool:
         # but, in that case, the formula above returns a negative NTU value.
         # The value of NTU cannot be negative, so we set it equal to zero.
         if ntu_val <= 0:
-            self.current_turbidity = 0
+            self.water_turbidity = 0
         else:
-            self.current_turbidity = ntu_val
+            self.water_turbidity = ntu_val
 
-        if self.TURBIDITY_MIN <= self.current_turbidity <= self.TURBIDITY_MAX:
+        if self.TURBIDITY_MIN <= self.water_turbidity <= self.TURBIDITY_MAX:
             self.is_acceptable_turbidity = True
         else:
             self.is_acceptable_turbidity = False
