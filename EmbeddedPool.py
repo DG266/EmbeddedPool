@@ -1,13 +1,15 @@
-import time
-
 try:
     import RPi.GPIO as GPIO
     import Adafruit_DHT
 except ImportError:
     import mock.GPIO as GPIO
     import mock.Adafruit_DHT as Adafruit_DHT
+import time
+from LCDError import LCDError
 from libs.DFRobot_ADS1115 import ADS1115
 from libs.DFRobot_PH import DFRobot_PH
+from libs.PCF8574 import PCF8574_GPIO
+from libs.Adafruit_LCD1602 import Adafruit_CharLCD
 
 
 class EmbeddedPool:
@@ -58,6 +60,10 @@ class EmbeddedPool:
         self.servo.start(0)
         self.servo.ChangeDutyCycle(2)
 
+        # LCD setup (0x27 is the I2C address of the PCF8574 chip)
+        self.pcf = PCF8574_GPIO(0x27)
+        self.lcd = Adafruit_CharLCD(pin_rs=0, pin_e=2, pins_db=[4, 5, 6, 7], GPIO=self.pcf)
+
         # Instance variables
         self.correct_water_temperature = None
         self.current_water_temperature = None
@@ -72,6 +78,7 @@ class EmbeddedPool:
         self.is_acceptable_turbidity = None
         self.current_turbidity = None
         self.are_windows_open = None
+        self.is_lcd_backlight_on = None
 
     def check_water_temperature(self) -> None:
         result = GPIO.input(self.TEMPERATURE_WATER_PIN)
@@ -152,3 +159,25 @@ class EmbeddedPool:
         time.sleep(1)
         GPIO.output(self.SERVO_PIN, GPIO.LOW)
         self.servo.ChangeDutyCycle(0)
+
+    def turn_on_lcd_backlight(self):
+        if not self.is_lcd_backlight_on:
+            self.pcf.output(3, 1)  # Turn on LCD backlight
+            self.lcd.begin(16, 2)  # Set number of LCD columns and rows
+            self.is_lcd_backlight_on = True
+        else:
+            raise LCDError("The LCD is already on.")
+
+    def turn_off_lcd_backlight(self):
+        if self.is_lcd_backlight_on:
+            self.pcf.output(3, 0)  # Turn off LCD backlight
+            self.is_lcd_backlight_on = False
+        else:
+            raise LCDError("The LCD is already off.")
+
+    def lcd_print(self, message):
+        self.lcd.setCursor(0, 0)
+        self.lcd.message(message)
+
+    def lcd_clear(self):
+        self.lcd.clear()

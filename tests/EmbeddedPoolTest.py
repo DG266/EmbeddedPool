@@ -5,6 +5,7 @@ except ImportError:
     import mock.GPIO as GPIO
     import mock.Adafruit_DHT as Adafruit_DHT
 import unittest
+from LCDError import LCDError
 from unittest.mock import patch
 from EmbeddedPool import EmbeddedPool
 from libs.DFRobot_ADS1115 import ADS1115
@@ -117,3 +118,22 @@ class MyTestCase(unittest.TestCase):
         self.ep.check_turbidity()
 
         self.assertEqual(False, self.ep.is_acceptable_turbidity)
+
+    def test_turn_on_lcd_backlight(self):
+        self.ep.turn_on_lcd_backlight()
+
+        self.assertEqual(True, self.ep.is_lcd_backlight_on)
+
+    def test_turn_on_lcd_backlight_when_it_is_already_on(self):
+        self.ep.turn_on_lcd_backlight()
+
+        self.assertRaises(LCDError, self.ep.turn_on_lcd_backlight)
+
+    def test_turn_off_lcd_backlight(self):
+        self.ep.turn_on_lcd_backlight()
+        self.ep.turn_off_lcd_backlight()
+
+        self.assertEqual(False, self.ep.is_lcd_backlight_on)
+
+    def test_turn_off_lcd_backlight_when_it_is_already_off(self):
+        self.assertRaises(LCDError, self.ep.turn_off_lcd_backlight)

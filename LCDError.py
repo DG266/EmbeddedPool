@@ -1,0 +1,2 @@
+class LCDError(Exception):
+	pass
