@@ -50,6 +50,7 @@ class EmbeddedPool:
         self.ph_helper = DFRobot_PH()
 
         # Servo motor setup
+        GPIO.setup(self.SERVO_PIN, GPIO.OUT)
         self.servo = GPIO.PWM(self.SERVO_PIN, 50)
         self.servo.start(0)
         self.servo.ChangeDutyCycle(2)
