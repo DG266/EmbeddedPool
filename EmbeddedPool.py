@@ -18,7 +18,8 @@ class EmbeddedPool:
 
     # ADC pins
     PH_SENSOR_PIN = 0
-    CHOLORIN_SENSOR_PIN = 1
+    TURBIDITY_SENSOR_PIN = 1
+    CHOLORIN_SENSOR_PIN = 3
 
     # Servo motor stuff
     DC_OPEN = (180 / 18) + 2
@@ -33,6 +34,8 @@ class EmbeddedPool:
     PH_MAX = 7.6
     CHLORINE_MIN = 1
     CHLORINE_MAX = 1.5
+    TURBIDITY_MIN = 0
+    TURBIDITY_MAX = 0.5
 
     def __init__(self):
         # Use Broadcom GPIO numbers
@@ -66,6 +69,8 @@ class EmbeddedPool:
         self.water_cholorin = None
         self.correct_humidity = None
         self.humidity_level = None
+        self.is_acceptable_turbidity = None
+        self.current_turbidity = None
         self.are_windows_open = None
 
     def check_water_temperature(self) -> None:
@@ -113,6 +118,25 @@ class EmbeddedPool:
             self.correct_humidity = True
         else:
             self.correct_humidity = False
+
+    def check_turbidity(self) -> None:
+        # See https://wiki.dfrobot.com/Turbidity_sensor_SKU__SEN0189
+        voltage = self.ads1115.read_voltage(self.TURBIDITY_SENSOR_PIN)
+        voltage = voltage / 1000  # from mV to V
+        ntu_val = (-1120.4 * (voltage ** 2)) + (5742.3 * voltage) - 4352.9
+
+        # In clean water, the sensor reads 4.3/4.4 volts,
+        # but, in that case, the formula above returns a negative NTU value.
+        # The value of NTU cannot be negative, so we set it equal to zero.
+        if ntu_val <= 0:
+            self.current_turbidity = 0
+        else:
+            self.current_turbidity = ntu_val
+
+        if self.TURBIDITY_MIN <= self.current_turbidity <= self.TURBIDITY_MAX:
+            self.is_acceptable_turbidity = True
+        else:
+            self.is_acceptable_turbidity = False
 
     def control_windows(self) -> None:
         if not self.correct_humidity:

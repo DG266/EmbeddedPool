@@ -101,3 +101,19 @@ class MyTestCase(unittest.TestCase):
         self.ep.control_windows()
 
         self.assertEqual(False, self.ep.are_windows_open)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_turbidity_with_good_turbidity(self, mock_read_voltage):
+        mock_read_voltage.return_value = 4300
+
+        self.ep.check_turbidity()
+
+        self.assertEqual(True, self.ep.is_acceptable_turbidity)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_turbidity_with_bad_turbidity(self, mock_read_voltage):
+        mock_read_voltage.return_value = 2500
+
+        self.ep.check_turbidity()
+
+        self.assertEqual(False, self.ep.is_acceptable_turbidity)
