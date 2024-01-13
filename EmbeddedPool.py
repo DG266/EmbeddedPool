@@ -17,7 +17,7 @@ class EmbeddedPool:
     # Raspberry BCM GPIO pins
     TEMPERATURE_WATER_PIN = 27
     DHT_PIN = 26
-    SERVO_PIN = 20
+    SERVO_PIN = 18
 
     # ADC pins
     PH_SENSOR_PIN = 0
@@ -49,6 +49,9 @@ class EmbeddedPool:
         self.ads1115.set_addr_ADS1115(0x48)
         self.ads1115.set_gain(0x00)
 
+        # Water temperature sensor setup
+        GPIO.setup(self.TEMPERATURE_WATER_PIN, GPIO.IN)
+
         # DHT11 setup
         self.dht_type = Adafruit_DHT.DHT11
 
@@ -57,9 +60,9 @@ class EmbeddedPool:
 
         # Servo motor setup
         GPIO.setup(self.SERVO_PIN, GPIO.OUT)
-        self.servo = GPIO.PWM(self.SERVO_PIN, 50)
-        self.servo.start(0)
-        self.servo.ChangeDutyCycle(2)
+        self.p = GPIO.PWM(self.SERVO_PIN, 50)
+        self.p.start(0)
+        # self.p.ChangeDutyCycle(2)
 
         # LCD setup (0x27 is the I2C address of the PCF8574 chip)
         self.pcf = PCF8574_GPIO(0x27)
@@ -163,10 +166,10 @@ class EmbeddedPool:
 
     def change_servo_angle(self, duty_cycle: float) -> None:
         GPIO.output(self.SERVO_PIN, GPIO.HIGH)
-        self.servo.ChangeDutyCycle(duty_cycle)
+        self.p.ChangeDutyCycle(duty_cycle)
         time.sleep(1)
         GPIO.output(self.SERVO_PIN, GPIO.LOW)
-        self.servo.ChangeDutyCycle(0)
+        self.p.ChangeDutyCycle(0)
 
     def turn_on_lcd_backlight(self):
         if not self.is_lcd_backlight_on:
@@ -189,3 +192,9 @@ class EmbeddedPool:
 
     def lcd_clear(self):
         self.lcd.clear()
+
+    def turn_off(self):
+        self.lcd_clear()
+        self.turn_off_lcd_backlight()
+        self.p.stop()
+        GPIO.cleanup()
