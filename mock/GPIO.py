@@ -73,7 +73,7 @@ def setmode(mode):
     BCM   - Use Broadcom GPIO 00..nn numbers
     """
     # GPIO = GPIO()
-    time.sleep(1)
+    #time.sleep(1)  # It slows down the execution of tests! Is there a reason to keep it...?
     if(mode == BCM):
         setModeDone = True
         _mode = mode
