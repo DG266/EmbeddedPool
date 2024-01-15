@@ -10,10 +10,18 @@ embedded_system = EmbeddedPool()
 
 def loop():
 	while True:
+		# Read sensors
+		embedded_system.check_water_temperature()
+		embedded_system.check_environment_temperature_and_humidity()
 		embedded_system.check_water_ph()
-		# print(f"INFO: The water pH is equal to {embedded_system.water_ph}")
-		embedded_system.lcd_print(f"pH = {embedded_system.water_ph:.2f}")
-		time.sleep(1)
+		embedded_system.check_cholorin_level()
+		embedded_system.check_turbidity()
+
+		# Act
+		embedded_system.control_windows()
+		embedded_system.lcd_update()
+
+		time.sleep(0.25)
 
 
 if __name__ == '__main__':

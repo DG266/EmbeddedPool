@@ -5,6 +5,7 @@ except ImportError:
     import mock.GPIO as GPIO
     import mock.Adafruit_DHT as Adafruit_DHT
 import time
+import threading
 from LCDError import LCDError
 from DHTError import DHTError
 from libs.DFRobot_ADS1115 import ADS1115
@@ -18,6 +19,8 @@ class EmbeddedPool:
     TEMPERATURE_WATER_PIN = 27
     DHT_PIN = 26
     SERVO_PIN = 18
+    BUTTON_PREV_PIN = 5
+    BUTTON_NEXT_PIN = 6
 
     # ADC pins
     PH_SENSOR_PIN = 0
@@ -39,6 +42,9 @@ class EmbeddedPool:
     CHLORINE_MAX = 1.5
     TURBIDITY_MIN = 0
     TURBIDITY_MAX = 0.5
+
+    FIRST_SCREEN = 0
+    LAST_SCREEN = 2
 
     def __init__(self):
         GPIO.setmode(GPIO.BCM)  # Use Broadcom GPIO numbers
@@ -67,6 +73,17 @@ class EmbeddedPool:
         # LCD setup (0x27 is the I2C address of the PCF8574 chip)
         self.pcf = PCF8574_GPIO(0x27)
         self.lcd = Adafruit_CharLCD(pin_rs=0, pin_e=2, pins_db=[4, 5, 6, 7], GPIO=self.pcf)
+        self.lcd.begin(16, 2)  # Set number of LCD columns and rows
+        self.current_screen = 0
+        self.current_lcd_text = None
+
+        # Buttons setup
+        GPIO.setup(self.BUTTON_PREV_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(self.BUTTON_NEXT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.add_event_detect(self.BUTTON_PREV_PIN, GPIO.FALLING, callback=self.button_prev_event, bouncetime=500)
+        GPIO.add_event_detect(self.BUTTON_NEXT_PIN, GPIO.FALLING, callback=self.button_next_event, bouncetime=500)
+
+        self.current_screen_lock = threading.Lock()
 
         # Instance variables - booleans
         self.correct_water_temperature = None
@@ -174,7 +191,6 @@ class EmbeddedPool:
     def turn_on_lcd_backlight(self):
         if not self.is_lcd_backlight_on:
             self.pcf.output(3, 1)  # Turn on LCD backlight
-            self.lcd.begin(16, 2)  # Set number of LCD columns and rows
             self.is_lcd_backlight_on = True
         else:
             raise LCDError("The LCD is already on.")
@@ -192,6 +208,39 @@ class EmbeddedPool:
 
     def lcd_clear(self):
         self.lcd.clear()
+
+    def update_current_screen_text(self):
+        if self.current_screen == 0:
+            self.current_lcd_text = f"EnvTmp: {self.environment_temperature:.2f}\nHum: {self.humidity:.2f}"
+        elif self.current_screen == 1:
+            self.current_lcd_text = f"pH: {self.water_ph:.2f}"
+        elif self.current_screen == 2:
+            self.current_lcd_text = f"Turb: {self.water_turbidity:.2f}"
+
+    def lcd_update(self):
+        with self.current_screen_lock:
+            self.update_current_screen_text()
+            self.lcd_print(self.current_lcd_text)
+
+    def button_prev_event(self, channel):
+        with self.current_screen_lock:
+            self.current_screen = self.current_screen - 1
+            if self.current_screen < self.FIRST_SCREEN:
+                self.current_screen = self.LAST_SCREEN
+
+            self.update_current_screen_text()
+            self.lcd_clear()
+            self.lcd_print(self.current_lcd_text)
+
+    def button_next_event(self, channel):
+        with self.current_screen_lock:
+            self.current_screen = self.current_screen + 1
+            if self.current_screen > self.LAST_SCREEN:
+                self.current_screen = self.FIRST_SCREEN
+
+            self.update_current_screen_text()
+            self.lcd_clear()
+            self.lcd_print(self.current_lcd_text)
 
     def turn_off(self):
         self.lcd_clear()

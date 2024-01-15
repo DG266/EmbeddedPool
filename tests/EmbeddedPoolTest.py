@@ -188,3 +188,81 @@ class MyTestCase(unittest.TestCase):
 
     def test_turn_off_lcd_backlight_when_it_is_already_off(self):
         self.assertRaises(LCDError, self.ep.turn_off_lcd_backlight)
+
+    def test_update_current_screen_text_on_screen_0(self):
+        # Remember that the default screen is screen 0, so it's not necessary
+        # self.ep.current_screen = 0
+        self.ep.humidity = 27
+        self.ep.environment_temperature = 28
+
+        self.ep.update_current_screen_text()
+
+        self.assertEquals("EnvTmp: 28.00\nHum: 27.00", self.ep.current_lcd_text)
+
+    def test_update_current_screen_text_on_screen_1(self):
+        self.ep.current_screen = 1
+        self.ep.water_ph = 7.283567
+
+        self.ep.update_current_screen_text()
+
+        self.assertEquals("pH: 7.28", self.ep.current_lcd_text)
+
+    def test_update_current_screen_text_on_screen_2(self):
+        self.ep.current_screen = 2
+        self.ep.water_turbidity = 0
+
+        self.ep.update_current_screen_text()
+
+        self.assertEquals("Turb: 0.00", self.ep.current_lcd_text)
+
+    def test_button_prev_event_on_screen_0(self):
+        # Remember that the default screen is screen 0, so it's not necessary
+        # self.ep.current_screen = 0
+        self.ep.water_turbidity = 0
+
+        self.ep.button_prev_event(self.ep.BUTTON_PREV_PIN)
+
+        self.assertEqual(2, self.ep.current_screen)
+
+    def test_button_prev_event_on_screen_1(self):
+        self.ep.current_screen = 1
+        self.ep.humidity = 27.00
+        self.ep.environment_temperature = 28.00
+
+        self.ep.button_prev_event(self.ep.BUTTON_PREV_PIN)
+
+        self.assertEqual(0, self.ep.current_screen)
+
+    def test_button_prev_event_on_screen_2(self):
+        self.ep.current_screen = 2
+        self.ep.water_ph = 7.28
+
+        self.ep.button_prev_event(self.ep.BUTTON_PREV_PIN)
+
+        self.assertEqual(1, self.ep.current_screen)
+
+    def test_button_next_event_on_screen_0(self):
+        # Remember that the default screen is screen 0, so it's not necessary
+        # self.ep.current_screen = 0
+        self.ep.water_ph = 7.28
+
+        self.ep.button_next_event(self.ep.BUTTON_NEXT_PIN)
+
+        self.assertEqual(1, self.ep.current_screen)
+
+    def test_button_next_event_on_screen_1(self):
+        self.ep.current_screen = 1
+        self.ep.water_turbidity = 0
+
+        self.ep.button_next_event(self.ep.BUTTON_NEXT_PIN)
+
+        self.assertEqual(2, self.ep.current_screen)
+
+    def test_button_next_event_on_screen_2(self):
+        self.ep.current_screen = 2
+        self.ep.humidity = 27.00
+        self.ep.environment_temperature = 28.00
+
+        self.ep.button_next_event(self.ep.BUTTON_NEXT_PIN)
+
+        self.assertEqual(0, self.ep.current_screen)
