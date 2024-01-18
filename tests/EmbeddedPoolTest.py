@@ -41,7 +41,7 @@ class MyTestCase(unittest.TestCase):
         mock_read_retry.return_value = [27.00, 28.00]
 
         self.ep.check_water_temperature()
-        self.ep.check_environment_temperature_and_humidity()
+        self.ep.check_humidity_and_environment_temperature()
 
         self.assertEqual(True, self.ep.correct_humidity)
         self.assertEqual(True, self.ep.correct_environment_temperature)
@@ -55,7 +55,7 @@ class MyTestCase(unittest.TestCase):
         mock_read_retry.return_value = [30.00, 29.00]
 
         self.ep.check_water_temperature()
-        self.ep.check_environment_temperature_and_humidity()
+        self.ep.check_humidity_and_environment_temperature()
 
         self.assertEqual(False, self.ep.correct_humidity)
         self.assertEqual(False, self.ep.correct_environment_temperature)
@@ -69,7 +69,7 @@ class MyTestCase(unittest.TestCase):
         mock_read_retry.return_value = [27.00, 30.00]
 
         self.ep.check_water_temperature()
-        self.ep.check_environment_temperature_and_humidity()
+        self.ep.check_humidity_and_environment_temperature()
 
         self.assertEqual(True, self.ep.correct_humidity)
         self.assertEqual(False, self.ep.correct_environment_temperature)
@@ -83,7 +83,7 @@ class MyTestCase(unittest.TestCase):
         mock_read_retry.return_value = [40.00, 28.00]
 
         self.ep.check_water_temperature()
-        self.ep.check_environment_temperature_and_humidity()
+        self.ep.check_humidity_and_environment_temperature()
 
         self.assertEqual(False, self.ep.correct_humidity)
         self.assertEqual(True, self.ep.correct_environment_temperature)
@@ -98,7 +98,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_water_temperature()
 
-        self.assertRaises(DHTError, self.ep.check_environment_temperature_and_humidity)
+        self.assertRaises(DHTError, self.ep.check_humidity_and_environment_temperature)
 
     @patch.object(ADS1115, "read_voltage")
     def test_check_water_ph_with_good_ph_value(self, mock_read_voltage):
@@ -135,7 +135,7 @@ class MyTestCase(unittest.TestCase):
         mock_read_retry.return_value = [31.50, 28.00]
 
         self.ep.check_water_temperature()
-        self.ep.check_environment_temperature_and_humidity()
+        self.ep.check_humidity_and_environment_temperature()
         self.ep.control_windows()
 
         self.assertEqual(True, self.ep.are_windows_open)
@@ -149,7 +149,7 @@ class MyTestCase(unittest.TestCase):
         mock_read_retry.return_value = [29.94, 27.70]
 
         self.ep.check_water_temperature()
-        self.ep.check_environment_temperature_and_humidity()
+        self.ep.check_humidity_and_environment_temperature()
         self.ep.control_windows()
 
         self.assertEqual(False, self.ep.are_windows_open)

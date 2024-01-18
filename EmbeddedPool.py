@@ -122,8 +122,8 @@ class EmbeddedPool:
             self.water_temperature, self.correct_water_temperature
         )
 
-    def check_environment_temperature_and_humidity(self) -> None:
-        logging.info("START check_environment_temperature_and_humidity")
+    def check_humidity_and_environment_temperature(self) -> None:
+        logging.info("START check_humidity_and_environment_temperature")
         self.humidity, self.environment_temperature = Adafruit_DHT.read_retry(self.dht_type, self.DHT_PIN)
 
         # You should always check water temperature before proceeding
@@ -141,7 +141,7 @@ class EmbeddedPool:
         else:
             raise DHTError("Failed to read from DHT sensor.")
         logging.info(
-            "END   check_environment_temperature_and_humidity Hum(value = %.2f, correct = %s)" 
+            "END   check_humidity_and_environment_temperature Hum(value = %.2f, correct = %s)" 
             " Temp(value = %.2f, correct = %s)",
             self.humidity, self.correct_humidity,
             self.environment_temperature, self.correct_environment_temperature
