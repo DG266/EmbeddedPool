@@ -153,15 +153,13 @@ class EmbeddedPool:
         # Read the voltage from the ADC (where the pH probe is connected)
         voltage = self.ads1115.read_voltage(self.PH_SENSOR_PIN)
         # Use the DFRobot pH library to convert voltage to pH
-        result = self.ph_helper.read_PH(voltage, None)
+        self.water_ph = self.ph_helper.read_PH(voltage, None)
 
-        if self.PH_MIN < result < self.PH_MAX:
+        if self.PH_MIN < self.water_ph < self.PH_MAX:
             self.is_acceptable_ph = True
         else:
             self.is_acceptable_ph = False
 
-        # Update the pH value in the instance variable
-        self.water_ph = result
         logging.info(
             "END   check_water_ph (value = %.2f, correct = %s)",
             self.water_ph, self.is_acceptable_ph
