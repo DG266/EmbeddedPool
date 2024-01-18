@@ -98,8 +98,8 @@ class EmbeddedPool:
         self.is_acceptable_cholorin = None
         self.is_acceptable_turbidity = None
 
-        self.are_windows_open = None
-        self.is_lcd_backlight_on = None
+        self.are_windows_open = False
+        self.is_lcd_backlight_on = False
 
         # Instance variables - values
         self.water_temperature = None
@@ -209,10 +209,10 @@ class EmbeddedPool:
 
     def control_windows(self) -> None:
         logging.info("START control_windows")
-        if not self.correct_humidity:
+        if not self.correct_humidity and not self.are_windows_open:
             self.change_servo_angle(self.DC_OPEN)
             self.are_windows_open = True
-        else:
+        elif self.correct_humidity and self.are_windows_open:
             self.change_servo_angle(self.DC_CLOSED)
             self.are_windows_open = False
         logging.info("END   control_windows (are_windows_open = %s)", self.are_windows_open)

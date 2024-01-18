@@ -198,7 +198,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.update_current_screen_text()
 
-        self.assertEquals("EnvTmp: 28.00\nHum: 27.00", self.ep.current_lcd_text)
+        self.assertEqual("EnvTmp: 28.00\nHum: 27.00", self.ep.current_lcd_text)
 
     def test_update_current_screen_text_on_screen_1(self):
         self.ep.current_screen = 1
@@ -206,7 +206,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.update_current_screen_text()
 
-        self.assertEquals("pH: 7.28", self.ep.current_lcd_text)
+        self.assertEqual("pH: 7.28", self.ep.current_lcd_text)
 
     def test_update_current_screen_text_on_screen_2(self):
         self.ep.current_screen = 2
@@ -214,7 +214,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.update_current_screen_text()
 
-        self.assertEquals("Turb: 0.00", self.ep.current_lcd_text)
+        self.assertEqual("Turb: 0.00", self.ep.current_lcd_text)
 
     def test_button_prev_event_on_screen_0(self):
         # Remember that the default screen is screen 0, so it's not necessary
