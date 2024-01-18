@@ -5,7 +5,7 @@ except ImportError:
 import time
 from EmbeddedPool import EmbeddedPool
 
-embedded_system = EmbeddedPool()
+embedded_system = EmbeddedPool("Info")
 
 
 def loop():
@@ -22,6 +22,7 @@ def loop():
 		embedded_system.lcd_update()
 
 		time.sleep(0.25)
+		print("\n")
 
 
 if __name__ == '__main__':

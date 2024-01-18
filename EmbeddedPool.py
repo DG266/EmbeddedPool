@@ -6,6 +6,7 @@ except ImportError:
     import mock.Adafruit_DHT as Adafruit_DHT
 import time
 import threading
+import logging
 from LCDError import LCDError
 from DHTError import DHTError
 from libs.DFRobot_ADS1115 import ADS1115
@@ -16,11 +17,11 @@ from libs.Adafruit_LCD1602 import Adafruit_CharLCD
 
 class EmbeddedPool:
     # Raspberry BCM GPIO pins
-    TEMPERATURE_WATER_PIN = 27
+    TEMPERATURE_WATER_PIN = 4
     DHT_PIN = 26
     SERVO_PIN = 18
     BUTTON_PREV_PIN = 5
-    BUTTON_NEXT_PIN = 6
+    BUTTON_NEXT_PIN = 21
 
     # ADC pins
     PH_SENSOR_PIN = 0
@@ -46,7 +47,10 @@ class EmbeddedPool:
     FIRST_SCREEN = 0
     LAST_SCREEN = 2
 
-    def __init__(self):
+    def __init__(self, log_level=None):
+        if log_level == "Info":
+            logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
+
         GPIO.setmode(GPIO.BCM)  # Use Broadcom GPIO numbers
         GPIO.setwarnings(True)
 
@@ -104,14 +108,22 @@ class EmbeddedPool:
         self.water_cholorin = None
         self.water_turbidity = None
 
+        logging.info("The embedded system has been initialized")
+
     def check_water_temperature(self) -> None:
+        logging.info("START check_water_temperature")
         self.water_temperature = GPIO.input(self.TEMPERATURE_WATER_PIN)
         if self.WATER_TEMP_MIN <= self.water_temperature <= self.WATER_TEMP_MAX:
             self.correct_water_temperature = True
         else:
             self.correct_water_temperature = False
+        logging.info(
+            "END   check_water_temperature (value = %d, correct = %s)",
+            self.water_temperature, self.correct_water_temperature
+        )
 
     def check_environment_temperature_and_humidity(self) -> None:
+        logging.info("START check_environment_temperature_and_humidity")
         self.humidity, self.environment_temperature = Adafruit_DHT.read_retry(self.dht_type, self.DHT_PIN)
 
         # You should always check water temperature before proceeding
@@ -128,8 +140,15 @@ class EmbeddedPool:
                 self.correct_humidity = False
         else:
             raise DHTError("Failed to read from DHT sensor.")
+        logging.info(
+            "END   check_environment_temperature_and_humidity Hum(value = %.2f, correct = %s)" 
+            " Temp(value = %.2f, correct = %s)",
+            self.humidity, self.correct_humidity,
+            self.environment_temperature, self.correct_environment_temperature
+        )
 
     def check_water_ph(self) -> None:
+        logging.info("START check_water_ph")
         # Read the voltage from the ADC (where the pH probe is connected)
         voltage = self.ads1115.read_voltage(self.PH_SENSOR_PIN)
         # Use the DFRobot pH library to convert voltage to pH
@@ -142,8 +161,13 @@ class EmbeddedPool:
 
         # Update the pH value in the instance variable
         self.water_ph = result
+        logging.info(
+            "END   check_water_ph (value = %.2f, correct = %s)",
+            self.water_ph, self.is_acceptable_ph
+        )
 
     def check_cholorin_level(self) -> None:
+        logging.info("START check_chlorine_level")
         voltage = self.ads1115.read_voltage(self.CHOLORIN_SENSOR_PIN)
         orp_value = ((30 * voltage * 1000) - (voltage * 1000))
 
@@ -153,8 +177,13 @@ class EmbeddedPool:
             self.is_acceptable_cholorin = False
         elif self.CHLORINE_MIN <= orp_value < self.CHLORINE_MAX:
             self.is_acceptable_cholorin = True
+        logging.info(
+            "END   check_chlorine_level (value = %.2f, correct = %s)",
+            orp_value, self.is_acceptable_cholorin
+        )
 
     def check_turbidity(self) -> None:
+        logging.info("START check_turbidity")
         # See https://wiki.dfrobot.com/Turbidity_sensor_SKU__SEN0189
         voltage = self.ads1115.read_voltage(self.TURBIDITY_SENSOR_PIN)
         voltage = voltage / 1000  # from mV to V
@@ -172,14 +201,20 @@ class EmbeddedPool:
             self.is_acceptable_turbidity = True
         else:
             self.is_acceptable_turbidity = False
+        logging.info(
+            "END   check_turbidity (value = %.2f, correct = %s)",
+            self.water_turbidity, self.is_acceptable_turbidity
+        )
 
     def control_windows(self) -> None:
+        logging.info("START control_windows")
         if not self.correct_humidity:
             self.change_servo_angle(self.DC_OPEN)
             self.are_windows_open = True
         else:
             self.change_servo_angle(self.DC_CLOSED)
             self.are_windows_open = False
+        logging.info("END   control_windows (are_windows_open = %s)", self.are_windows_open)
 
     def change_servo_angle(self, duty_cycle: float) -> None:
         GPIO.output(self.SERVO_PIN, GPIO.HIGH)
