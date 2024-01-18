@@ -13,11 +13,12 @@ from libs.DFRobot_ADS1115 import ADS1115
 from libs.DFRobot_PH import DFRobot_PH
 from libs.PCF8574 import PCF8574_GPIO
 from libs.Adafruit_LCD1602 import Adafruit_CharLCD
+from libs.DS18B20 import DS18B20
 
 
 class EmbeddedPool:
     # Raspberry BCM GPIO pins
-    TEMPERATURE_WATER_PIN = 4
+    WATER_TEMPERATURE_PIN = 4  # Not necessary
     DHT_PIN = 26
     SERVO_PIN = 18
     BUTTON_PREV_PIN = 5
@@ -60,7 +61,7 @@ class EmbeddedPool:
         self.ads1115.set_gain(0x00)
 
         # Water temperature sensor setup
-        GPIO.setup(self.TEMPERATURE_WATER_PIN, GPIO.IN)
+        self.ds18b20 = DS18B20()
 
         # DHT11 setup
         self.dht_type = Adafruit_DHT.DHT11
@@ -112,13 +113,13 @@ class EmbeddedPool:
 
     def check_water_temperature(self) -> None:
         logging.info("START check_water_temperature")
-        self.water_temperature = GPIO.input(self.TEMPERATURE_WATER_PIN)
+        self.water_temperature = self.ds18b20.read_temp()
         if self.WATER_TEMP_MIN <= self.water_temperature <= self.WATER_TEMP_MAX:
             self.correct_water_temperature = True
         else:
             self.correct_water_temperature = False
         logging.info(
-            "END   check_water_temperature (value = %d, correct = %s)",
+            "END   check_water_temperature (value = %.2f, correct = %s)",
             self.water_temperature, self.correct_water_temperature
         )
 
