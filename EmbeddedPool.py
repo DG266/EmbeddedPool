@@ -23,6 +23,7 @@ class EmbeddedPool:
     SERVO_PIN = 18
     BUTTON_PREV_PIN = 5
     BUTTON_NEXT_PIN = 21
+    WATER_LEVEL_PIN=17
 
     # ADC pins
     PH_SENSOR_PIN = 0
@@ -281,3 +282,11 @@ class EmbeddedPool:
         self.turn_off_lcd_backlight()
         self.p.stop()
         GPIO.cleanup()
+
+    def check_water_level(self):
+      result =GPIO.input(self.WATER_LEVEL_PIN )
+      if result==1:
+          self.is_water_level_good=True
+
+      else:
+         self.is_water_level_good=False

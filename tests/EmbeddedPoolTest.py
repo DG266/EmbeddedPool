@@ -267,3 +267,10 @@ class MyTestCase(unittest.TestCase):
         self.ep.button_next_event(self.ep.BUTTON_NEXT_PIN)
 
         self.assertEqual(0, self.ep.current_screen)
+
+
+    @patch.object(GPIO,"input")
+    def test_check_water_level(self,mock_input):
+        mock_input.return_value=1
+        self.ep.check_water_level()
+        self.assertEqual(True,self.ep.is_water_level_good)
