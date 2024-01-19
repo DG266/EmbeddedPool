@@ -171,6 +171,30 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(False, self.ep.is_acceptable_turbidity)
 
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_environment_light_level_with_good_lighting(self, mock_read_voltage):
+        mock_read_voltage.return_value = 1390
+
+        self.ep.check_environment_light_level()
+
+        self.assertEqual(True, self.ep.is_acceptable_light)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_environment_light_level_with_too_low_lighting(self, mock_read_voltage):
+        mock_read_voltage.return_value = 0
+
+        self.ep.check_environment_light_level()
+
+        self.assertEqual(False, self.ep.is_acceptable_light)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_environment_light_level_with_too_high_lighting(self, mock_read_voltage):
+        mock_read_voltage.return_value = 4930
+
+        self.ep.check_environment_light_level()
+
+        self.assertEqual(False, self.ep.is_acceptable_light)
+
     def test_turn_on_lcd_backlight(self):
         self.ep.turn_on_lcd_backlight()
 

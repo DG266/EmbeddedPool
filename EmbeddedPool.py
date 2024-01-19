@@ -27,6 +27,7 @@ class EmbeddedPool:
     # ADC pins
     PH_SENSOR_PIN = 0
     TURBIDITY_SENSOR_PIN = 1
+    ENV_LIGHT_SENSOR_PIN = 2
     CHOLORIN_SENSOR_PIN = 3
 
     # Servo motor stuff
@@ -44,6 +45,8 @@ class EmbeddedPool:
     CHLORINE_MAX = 1.5
     TURBIDITY_MIN = 0
     TURBIDITY_MAX = 0.5
+    LUX_MIN = 200
+    LUX_MAX = 400
 
     FIRST_SCREEN = 0
     LAST_SCREEN = 2
@@ -97,6 +100,7 @@ class EmbeddedPool:
         self.is_acceptable_ph = None
         self.is_acceptable_cholorin = None
         self.is_acceptable_turbidity = None
+        self.is_acceptable_light = None
 
         self.are_windows_open = False
         self.is_lcd_backlight_on = False
@@ -108,6 +112,7 @@ class EmbeddedPool:
         self.water_ph = None
         self.water_cholorin = None
         self.water_turbidity = None
+        self.environment_light = None
 
         logging.info("The embedded system has been initialized")
 
@@ -203,6 +208,20 @@ class EmbeddedPool:
         logging.info(
             "END   check_turbidity (value = %.2f, correct = %s)",
             self.water_turbidity, self.is_acceptable_turbidity
+        )
+
+    def check_environment_light_level(self) -> None:
+        logging.info("START check_environment_light_level")
+        voltage = self.ads1115.read_voltage(self.ENV_LIGHT_SENSOR_PIN)
+        self.environment_light = (((voltage - 206) * 358) / 1184) + 15
+
+        if self.LUX_MIN <= self.environment_light <= self.LUX_MAX:
+            self.is_acceptable_light = True
+        else:
+            self.is_acceptable_light = False
+        logging.info(
+            "END   check_environment_light_level (value = %.2f, correct = %s)",
+            self.environment_light, self.is_acceptable_light
         )
 
     def control_windows(self) -> None:

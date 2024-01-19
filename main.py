@@ -16,12 +16,13 @@ def loop():
 		embedded_system.check_water_ph()
 		embedded_system.check_cholorin_level()
 		embedded_system.check_turbidity()
+		embedded_system.check_environment_light_level()
 
 		# Act
 		embedded_system.control_windows()
 		embedded_system.lcd_update()
 
-		time.sleep(0.25)
+		# time.sleep(0.25)
 		print("\n")
 
 
