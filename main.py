@@ -20,6 +20,7 @@ def loop():
 
 		# Act
 		embedded_system.control_windows()
+		embedded_system.control_led()
 		embedded_system.lcd_update()
 
 		# time.sleep(0.25)

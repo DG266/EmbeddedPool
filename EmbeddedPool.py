@@ -23,7 +23,8 @@ class EmbeddedPool:
     SERVO_PIN = 18
     BUTTON_PREV_PIN = 5
     BUTTON_NEXT_PIN = 21
-    WATER_LEVEL_PIN=17
+    WATER_LEVEL_PIN = 17
+    LED_PIN = 24
 
     # ADC pins
     PH_SENSOR_PIN = 0
@@ -79,6 +80,9 @@ class EmbeddedPool:
         self.p.start(0)
         # self.p.ChangeDutyCycle(2)
 
+        # LED setup
+        GPIO.setup(self.LED_PIN, GPIO.OUT)
+
         # LCD setup (0x27 is the I2C address of the PCF8574 chip)
         self.pcf = PCF8574_GPIO(0x27)
         self.lcd = Adafruit_CharLCD(pin_rs=0, pin_e=2, pins_db=[4, 5, 6, 7], GPIO=self.pcf)
@@ -102,8 +106,10 @@ class EmbeddedPool:
         self.is_acceptable_orp = None
         self.is_acceptable_turbidity = None
         self.is_acceptable_light = None
+        self.is_water_level_good = None
 
         self.are_windows_open = False
+        self.is_led_on = False
         self.is_lcd_backlight_on = False
 
         # Instance variables - values
@@ -148,7 +154,7 @@ class EmbeddedPool:
         else:
             raise DHTError("Failed to read from DHT sensor.")
         logging.info(
-            "END   check_humidity_and_environment_temperature Hum(value = %.2f%%, correct = %s)" 
+            "END   check_humidity_and_environment_temperature Hum(value = %.2f%%, correct = %s)"
             " Temp(value = %.2f°C, correct = %s)",
             self.humidity, self.correct_humidity,
             self.environment_temperature, self.correct_environment_temperature
@@ -179,7 +185,6 @@ class EmbeddedPool:
         offset = 0
 
         self.orp = int(((30 * system_voltage * 1000) - (75 * voltage * 1000)) / 75 - offset)
-        print(self.orp)
 
         if self.ORP_MIN <= self.orp <= self.ORP_MAX:
             self.is_acceptable_orp = True
@@ -245,6 +250,16 @@ class EmbeddedPool:
         GPIO.output(self.SERVO_PIN, GPIO.LOW)
         self.p.ChangeDutyCycle(0)
 
+    def control_led(self) -> None:
+        logging.info("START control_led")
+        if self.environment_light < self.LUX_MIN:
+            GPIO.output(self.LED_PIN, GPIO.HIGH)
+            self.is_led_on = True
+        else:
+            GPIO.output(self.LED_PIN, GPIO.LOW)
+            self.is_led_on = False
+        logging.info("END   control_led (is_led_on = %s)", self.is_led_on)
+
     def turn_on_lcd_backlight(self):
         if not self.is_lcd_backlight_on:
             self.pcf.output(3, 1)  # Turn on LCD backlight
@@ -268,21 +283,23 @@ class EmbeddedPool:
 
     def update_current_screen_text(self):
         if self.current_screen == 0:
-            self.current_lcd_text = f"EnvTmp: {self.environment_temperature: >6.2f}{chr(223)}C\n"\
+            self.current_lcd_text = f"EnvTmp: {self.environment_temperature: >6.2f}{chr(223)}C\n" \
                                     f"Hum: {self.humidity: >10.2f}%"
         elif self.current_screen == 1:
-            self.current_lcd_text = f"WatTmp: {self.water_temperature: >6.2f}{chr(223)}C\n"\
+            self.current_lcd_text = f"WatTmp: {self.water_temperature: >6.2f}{chr(223)}C\n" \
                                     f"Turb: {self.water_turbidity: >6.1f} NTU"
         elif self.current_screen == 2:
-            self.current_lcd_text = f"pH: {self.water_ph: >12.2f}\n"\
+            self.current_lcd_text = f"pH: {self.water_ph: >12.2f}\n" \
                                     f"ORP: {self.orp: >8} mV"
         elif self.current_screen == 3:
             self.current_lcd_text = f"Light: {self.environment_light: >5} lux"
 
     def lcd_update(self):
+        logging.info("START lcd_update")
         with self.current_screen_lock:
             self.update_current_screen_text()
             self.lcd_print(self.current_lcd_text)
+        logging.info("END   lcd_update")
 
     def button_prev_event(self, channel):
         logging.info("BUTTON_PREV (GPIO %d)", channel)
@@ -315,9 +332,8 @@ class EmbeddedPool:
         GPIO.cleanup()
 
     def check_water_level(self):
-      result =GPIO.input(self.WATER_LEVEL_PIN )
-      if result==1:
-          self.is_water_level_good=True
-
-      else:
-         self.is_water_level_good=False
+        result =GPIO.input(self.WATER_LEVEL_PIN )
+        if result==1:
+            self.is_water_level_good=True
+        else:
+            self.is_water_level_good=False

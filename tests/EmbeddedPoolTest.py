@@ -203,6 +203,39 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(False, self.ep.is_acceptable_light)
 
+    @patch.object(ADS1115, "read_voltage")
+    @patch.object(GPIO, "output")
+    def test_control_led_with_correct_lighting(self, mock_output, mock_read_voltage):
+        mock_read_voltage.return_value = 1390
+
+        self.ep.check_environment_light_level()
+        self.ep.control_led()
+
+        mock_output.assert_called_once_with(self.ep.LED_PIN, GPIO.LOW)
+        self.assertEqual(False, self.ep.is_led_on)
+
+    @patch.object(ADS1115, "read_voltage")
+    @patch.object(GPIO, "output")
+    def test_control_led_with_too_low_lighting(self, mock_output, mock_read_voltage):
+        mock_read_voltage.return_value = 100
+
+        self.ep.check_environment_light_level()
+        self.ep.control_led()
+
+        mock_output.assert_called_once_with(self.ep.LED_PIN, GPIO.HIGH)
+        self.assertEqual(True, self.ep.is_led_on)
+
+    @patch.object(ADS1115, "read_voltage")
+    @patch.object(GPIO, "output")
+    def test_control_led_with_too_high_lighting(self, mock_output, mock_read_voltage):
+        mock_read_voltage.return_value = 4000
+
+        self.ep.check_environment_light_level()
+        self.ep.control_led()
+
+        mock_output.assert_called_once_with(self.ep.LED_PIN, GPIO.LOW)
+        self.assertEqual(False, self.ep.is_led_on)
+
     ''' LCD SCREEN + BUTTONS TESTS ################################################################################# '''
     def test_turn_on_lcd_backlight(self):
         self.ep.turn_on_lcd_backlight()
