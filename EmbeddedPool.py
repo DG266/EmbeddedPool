@@ -74,6 +74,9 @@ class EmbeddedPool:
         # pH sensor setup
         self.ph_helper = DFRobot_PH()
 
+        # Liquid level sensor setup
+        GPIO.setup(self.WATER_LEVEL_PIN, GPIO.IN)
+
         # Servo motor setup
         GPIO.setup(self.SERVO_PIN, GPIO.OUT)
         self.p = GPIO.PWM(self.SERVO_PIN, 50)
@@ -233,6 +236,15 @@ class EmbeddedPool:
             self.environment_light, self.is_acceptable_light
         )
 
+    def check_water_level(self):
+        logging.info("START check_water_level")
+        result = GPIO.input(self.WATER_LEVEL_PIN)
+        if result == 1:
+            self.is_water_level_good = True
+        else:
+            self.is_water_level_good = False
+        logging.info("END   check_water_level (is_water_level_good = %s)", self.is_water_level_good)
+
     def control_windows(self) -> None:
         logging.info("START control_windows")
         if not self.correct_humidity and not self.are_windows_open:
@@ -330,10 +342,3 @@ class EmbeddedPool:
         self.turn_off_lcd_backlight()
         self.p.stop()
         GPIO.cleanup()
-
-    def check_water_level(self):
-        result =GPIO.input(self.WATER_LEVEL_PIN )
-        if result==1:
-            self.is_water_level_good=True
-        else:
-            self.is_water_level_good=False

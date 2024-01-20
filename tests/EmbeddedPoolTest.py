@@ -364,9 +364,18 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(0, self.ep.current_screen)
 
+    @patch.object(GPIO, "input")
+    def test_check_water_level_with_correct_level(self, mock_input):
+        mock_input.return_value = 1
 
-    @patch.object(GPIO,"input")
-    def test_check_water_level(self,mock_input):
-        mock_input.return_value=1
         self.ep.check_water_level()
-        self.assertEqual(True,self.ep.is_water_level_good)
+
+        self.assertEqual(True, self.ep.is_water_level_good)
+
+    @patch.object(GPIO, "input")
+    def test_check_water_level_with_wrong_level(self, mock_input):
+        mock_input.return_value = 0
+
+        self.ep.check_water_level()
+
+        self.assertEqual(False, self.ep.is_water_level_good)

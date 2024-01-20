@@ -17,6 +17,7 @@ def loop():
 		embedded_system.check_orp()
 		embedded_system.check_turbidity()
 		embedded_system.check_environment_light_level()
+		embedded_system.check_water_level()
 
 		# Act
 		embedded_system.control_windows()
