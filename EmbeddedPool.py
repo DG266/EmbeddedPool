@@ -28,7 +28,8 @@ class EmbeddedPool:
     # ADC pins
     PH_SENSOR_PIN = 0
     TURBIDITY_SENSOR_PIN = 1
-    CHOLORIN_SENSOR_PIN = 3
+    ENV_LIGHT_SENSOR_PIN = 2
+    ORP_SENSOR_PIN = 3
 
     # Servo motor stuff
     DC_OPEN = (180 / 18) + 2
@@ -41,13 +42,15 @@ class EmbeddedPool:
     HUMIDITY_MAX = 29.94
     PH_MIN = 7.2
     PH_MAX = 7.6
-    CHLORINE_MIN = 1
-    CHLORINE_MAX = 1.5
+    ORP_MIN = 750
+    ORP_MAX = 770
     TURBIDITY_MIN = 0
     TURBIDITY_MAX = 0.5
+    LUX_MIN = 200
+    LUX_MAX = 400
 
     FIRST_SCREEN = 0
-    LAST_SCREEN = 2
+    LAST_SCREEN = 3
 
     def __init__(self, log_level=None):
         if log_level == "Info":
@@ -96,8 +99,9 @@ class EmbeddedPool:
         self.correct_humidity = None
         self.correct_environment_temperature = None
         self.is_acceptable_ph = None
-        self.is_acceptable_cholorin = None
+        self.is_acceptable_orp = None
         self.is_acceptable_turbidity = None
+        self.is_acceptable_light = None
 
         self.are_windows_open = False
         self.is_lcd_backlight_on = False
@@ -107,8 +111,9 @@ class EmbeddedPool:
         self.humidity = None
         self.environment_temperature = None
         self.water_ph = None
-        self.water_cholorin = None
+        self.orp = None
         self.water_turbidity = None
+        self.environment_light = None
 
         logging.info("The embedded system has been initialized")
 
@@ -120,7 +125,7 @@ class EmbeddedPool:
         else:
             self.correct_water_temperature = False
         logging.info(
-            "END   check_water_temperature (value = %.2f, correct = %s)",
+            "END   check_water_temperature (value = %.2f°C, correct = %s)",
             self.water_temperature, self.correct_water_temperature
         )
 
@@ -143,8 +148,8 @@ class EmbeddedPool:
         else:
             raise DHTError("Failed to read from DHT sensor.")
         logging.info(
-            "END   check_humidity_and_environment_temperature Hum(value = %.2f, correct = %s)" 
-            " Temp(value = %.2f, correct = %s)",
+            "END   check_humidity_and_environment_temperature Hum(value = %.2f%%, correct = %s)" 
+            " Temp(value = %.2f°C, correct = %s)",
             self.humidity, self.correct_humidity,
             self.environment_temperature, self.correct_environment_temperature
         )
@@ -166,20 +171,23 @@ class EmbeddedPool:
             self.water_ph, self.is_acceptable_ph
         )
 
-    def check_cholorin_level(self) -> None:
-        logging.info("START check_chlorine_level")
-        voltage = self.ads1115.read_voltage(self.CHOLORIN_SENSOR_PIN)
-        orp_value = ((30 * voltage * 1000) - (voltage * 1000))
+    def check_orp(self) -> None:
+        logging.info("START check_orp")
+        voltage = self.ads1115.read_voltage(self.ORP_SENSOR_PIN)
+        voltage = voltage / 1000  # from mV to V
+        system_voltage = 5.00
+        offset = 0
 
-        if orp_value > self.CHLORINE_MAX:
-            self.is_acceptable_cholorin = False
-        elif orp_value <= self.CHLORINE_MIN:
-            self.is_acceptable_cholorin = False
-        elif self.CHLORINE_MIN <= orp_value < self.CHLORINE_MAX:
-            self.is_acceptable_cholorin = True
+        self.orp = int(((30 * system_voltage * 1000) - (75 * voltage * 1000)) / 75 - offset)
+        print(self.orp)
+
+        if self.ORP_MIN <= self.orp <= self.ORP_MAX:
+            self.is_acceptable_orp = True
+        else:
+            self.is_acceptable_orp = False
         logging.info(
-            "END   check_chlorine_level (value = %.2f, correct = %s)",
-            orp_value, self.is_acceptable_cholorin
+            "END   check_orp (value = %.2f mV, correct = %s)",
+            self.orp, self.is_acceptable_orp
         )
 
     def check_turbidity(self) -> None:
@@ -202,8 +210,22 @@ class EmbeddedPool:
         else:
             self.is_acceptable_turbidity = False
         logging.info(
-            "END   check_turbidity (value = %.2f, correct = %s)",
+            "END   check_turbidity (value = %.2f NTU, correct = %s)",
             self.water_turbidity, self.is_acceptable_turbidity
+        )
+
+    def check_environment_light_level(self) -> None:
+        logging.info("START check_environment_light_level")
+        voltage = self.ads1115.read_voltage(self.ENV_LIGHT_SENSOR_PIN)
+        self.environment_light = int((((voltage - 206) * 358) / 1184) + 15)
+
+        if self.LUX_MIN <= self.environment_light <= self.LUX_MAX:
+            self.is_acceptable_light = True
+        else:
+            self.is_acceptable_light = False
+        logging.info(
+            "END   check_environment_light_level (value = %d lux, correct = %s)",
+            self.environment_light, self.is_acceptable_light
         )
 
     def control_windows(self) -> None:
@@ -246,11 +268,16 @@ class EmbeddedPool:
 
     def update_current_screen_text(self):
         if self.current_screen == 0:
-            self.current_lcd_text = f"EnvTmp: {self.environment_temperature:.2f}\nHum: {self.humidity:.2f}"
+            self.current_lcd_text = f"EnvTmp: {self.environment_temperature: >6.2f}{chr(223)}C\n"\
+                                    f"Hum: {self.humidity: >10.2f}%"
         elif self.current_screen == 1:
-            self.current_lcd_text = f"pH: {self.water_ph:.2f}"
+            self.current_lcd_text = f"WatTmp: {self.water_temperature: >6.2f}{chr(223)}C\n"\
+                                    f"Turb: {self.water_turbidity: >6.1f} NTU"
         elif self.current_screen == 2:
-            self.current_lcd_text = f"Turb: {self.water_turbidity:.2f}"
+            self.current_lcd_text = f"pH: {self.water_ph: >12.2f}\n"\
+                                    f"ORP: {self.orp: >8} mV"
+        elif self.current_screen == 3:
+            self.current_lcd_text = f"Light: {self.environment_light: >5} lux"
 
     def lcd_update(self):
         with self.current_screen_lock:
@@ -258,6 +285,7 @@ class EmbeddedPool:
             self.lcd_print(self.current_lcd_text)
 
     def button_prev_event(self, channel):
+        logging.info("BUTTON_PREV (GPIO %d)", channel)
         with self.current_screen_lock:
             self.current_screen = self.current_screen - 1
             if self.current_screen < self.FIRST_SCREEN:
@@ -268,6 +296,7 @@ class EmbeddedPool:
             self.lcd_print(self.current_lcd_text)
 
     def button_next_event(self, channel):
+        logging.info("BUTTON_NEXT (GPIO %d)", channel)
         with self.current_screen_lock:
             self.current_screen = self.current_screen + 1
             if self.current_screen > self.LAST_SCREEN:
@@ -278,6 +307,8 @@ class EmbeddedPool:
             self.lcd_print(self.current_lcd_text)
 
     def turn_off(self):
+        if self.are_windows_open:
+            self.change_servo_angle(self.DC_CLOSED)
         self.lcd_clear()
         self.turn_off_lcd_backlight()
         self.p.stop()

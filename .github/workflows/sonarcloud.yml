@@ -25,6 +25,9 @@ jobs:
         run: |
           python -m coverage run -m unittest discover -s ./tests -p '*Test.py'
           python -m coverage xml
+      - name: Fix code coverage paths
+        run: |
+          sed -i 's|/home/runner/work/EmbeddedPool/EmbeddedPool|/github/workspace/|g' coverage.xml
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:

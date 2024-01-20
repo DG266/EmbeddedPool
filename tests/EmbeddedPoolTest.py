@@ -120,12 +120,20 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(False, self.ep.is_acceptable_ph)
 
     @patch.object(ADS1115, "read_voltage")
-    def test_check_cholorin_level(self, mock_read_voltage):
+    def test_check_orp_with_good_orp(self, mock_read_voltage):
+        mock_read_voltage.return_value = 1230
+
+        self.ep.check_orp()
+
+        self.assertEqual(True, self.ep.is_acceptable_orp)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_orp_with_bad_orp(self, mock_read_voltage):
         mock_read_voltage.return_value = 2000
 
-        self.ep.check_cholorin_level()
+        self.ep.check_orp()
 
-        self.assertEqual(False, self.ep.is_acceptable_cholorin)
+        self.assertEqual(False, self.ep.is_acceptable_orp)
 
     @patch.object(Adafruit_DHT, "read_retry")
     @patch.object(DS18B20, "read_temp")
@@ -171,6 +179,31 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(False, self.ep.is_acceptable_turbidity)
 
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_environment_light_level_with_good_lighting(self, mock_read_voltage):
+        mock_read_voltage.return_value = 1390
+
+        self.ep.check_environment_light_level()
+
+        self.assertEqual(True, self.ep.is_acceptable_light)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_environment_light_level_with_too_low_lighting(self, mock_read_voltage):
+        mock_read_voltage.return_value = 0
+
+        self.ep.check_environment_light_level()
+
+        self.assertEqual(False, self.ep.is_acceptable_light)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_environment_light_level_with_too_high_lighting(self, mock_read_voltage):
+        mock_read_voltage.return_value = 4930
+
+        self.ep.check_environment_light_level()
+
+        self.assertEqual(False, self.ep.is_acceptable_light)
+
+    ''' LCD SCREEN + BUTTONS TESTS ################################################################################# '''
     def test_turn_on_lcd_backlight(self):
         self.ep.turn_on_lcd_backlight()
 
@@ -198,32 +231,42 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.update_current_screen_text()
 
-        self.assertEqual("EnvTmp: 28.00\nHum: 27.00", self.ep.current_lcd_text)
+        self.assertEqual("EnvTmp:  28.00" + chr(223) + "C\nHum:      27.00%", self.ep.current_lcd_text)
 
     def test_update_current_screen_text_on_screen_1(self):
         self.ep.current_screen = 1
-        self.ep.water_ph = 7.283567
+        self.ep.water_turbidity = 0
+        self.ep.water_temperature = 26.00
 
         self.ep.update_current_screen_text()
 
-        self.assertEqual("pH: 7.28", self.ep.current_lcd_text)
+        self.assertEqual("WatTmp:  26.00" + chr(223) + "C\nTurb:    0.0 NTU", self.ep.current_lcd_text)
 
     def test_update_current_screen_text_on_screen_2(self):
         self.ep.current_screen = 2
-        self.ep.water_turbidity = 0
+        self.ep.water_ph = 7.283567
+        self.ep.orp = 760
 
         self.ep.update_current_screen_text()
 
-        self.assertEqual("Turb: 0.00", self.ep.current_lcd_text)
+        self.assertEqual("pH:         7.28\nORP:      760 mV", self.ep.current_lcd_text)
+
+    def test_update_current_screen_text_on_screen_3(self):
+        self.ep.current_screen = 3
+        self.ep.environment_light = 300
+
+        self.ep.update_current_screen_text()
+
+        self.assertEqual("Light:   300 lux", self.ep.current_lcd_text)
 
     def test_button_prev_event_on_screen_0(self):
         # Remember that the default screen is screen 0, so it's not necessary
         # self.ep.current_screen = 0
-        self.ep.water_turbidity = 0
+        self.ep.environment_light = 300
 
         self.ep.button_prev_event(self.ep.BUTTON_PREV_PIN)
 
-        self.assertEqual(2, self.ep.current_screen)
+        self.assertEqual(3, self.ep.current_screen)
 
     def test_button_prev_event_on_screen_1(self):
         self.ep.current_screen = 1
@@ -236,16 +279,27 @@ class MyTestCase(unittest.TestCase):
 
     def test_button_prev_event_on_screen_2(self):
         self.ep.current_screen = 2
-        self.ep.water_ph = 7.28
+        self.ep.water_temperature = 26
+        self.ep.water_turbidity = 0
 
         self.ep.button_prev_event(self.ep.BUTTON_PREV_PIN)
 
         self.assertEqual(1, self.ep.current_screen)
 
+    def test_button_prev_event_on_screen_3(self):
+        self.ep.current_screen = 3
+        self.ep.water_ph = 7.283567
+        self.ep.orp = 760
+
+        self.ep.button_prev_event(self.ep.BUTTON_PREV_PIN)
+
+        self.assertEqual(2, self.ep.current_screen)
+
     def test_button_next_event_on_screen_0(self):
         # Remember that the default screen is screen 0, so it's not necessary
         # self.ep.current_screen = 0
-        self.ep.water_ph = 7.28
+        self.ep.water_temperature = 26
+        self.ep.water_turbidity = 0
 
         self.ep.button_next_event(self.ep.BUTTON_NEXT_PIN)
 
@@ -253,7 +307,8 @@ class MyTestCase(unittest.TestCase):
 
     def test_button_next_event_on_screen_1(self):
         self.ep.current_screen = 1
-        self.ep.water_turbidity = 0
+        self.ep.water_ph = 7.283567
+        self.ep.orp = 760
 
         self.ep.button_next_event(self.ep.BUTTON_NEXT_PIN)
 
@@ -261,6 +316,14 @@ class MyTestCase(unittest.TestCase):
 
     def test_button_next_event_on_screen_2(self):
         self.ep.current_screen = 2
+        self.ep.environment_light = 300
+
+        self.ep.button_next_event(self.ep.BUTTON_NEXT_PIN)
+
+        self.assertEqual(3, self.ep.current_screen)
+
+    def test_button_next_event_on_screen_3(self):
+        self.ep.current_screen = 3
         self.ep.humidity = 27.00
         self.ep.environment_temperature = 28.00
 
