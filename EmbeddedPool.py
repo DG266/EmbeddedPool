@@ -306,6 +306,8 @@ class EmbeddedPool:
             self.lcd_print(self.current_lcd_text)
 
     def turn_off(self):
+        if self.are_windows_open:
+            self.change_servo_angle(self.DC_CLOSED)
         self.lcd_clear()
         self.turn_off_lcd_backlight()
         self.p.stop()
