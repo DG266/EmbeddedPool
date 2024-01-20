@@ -120,12 +120,20 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(False, self.ep.is_acceptable_ph)
 
     @patch.object(ADS1115, "read_voltage")
-    def test_check_cholorin_level(self, mock_read_voltage):
+    def test_check_orp_with_good_orp(self, mock_read_voltage):
+        mock_read_voltage.return_value = 1230
+
+        self.ep.check_orp()
+
+        self.assertEqual(True, self.ep.is_acceptable_orp)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_orp_with_bad_orp(self, mock_read_voltage):
         mock_read_voltage.return_value = 2000
 
-        self.ep.check_cholorin_level()
+        self.ep.check_orp()
 
-        self.assertEqual(False, self.ep.is_acceptable_cholorin)
+        self.assertEqual(False, self.ep.is_acceptable_orp)
 
     @patch.object(Adafruit_DHT, "read_retry")
     @patch.object(DS18B20, "read_temp")
@@ -237,7 +245,7 @@ class MyTestCase(unittest.TestCase):
     def test_update_current_screen_text_on_screen_2(self):
         self.ep.current_screen = 2
         self.ep.water_ph = 7.283567
-        self.ep.water_cholorin = 760
+        self.ep.orp = 760
 
         self.ep.update_current_screen_text()
 
@@ -281,7 +289,7 @@ class MyTestCase(unittest.TestCase):
     def test_button_prev_event_on_screen_3(self):
         self.ep.current_screen = 3
         self.ep.water_ph = 7.283567
-        self.ep.water_cholorin = 760
+        self.ep.orp = 760
 
         self.ep.button_prev_event(self.ep.BUTTON_PREV_PIN)
 
@@ -300,7 +308,7 @@ class MyTestCase(unittest.TestCase):
     def test_button_next_event_on_screen_1(self):
         self.ep.current_screen = 1
         self.ep.water_ph = 7.283567
-        self.ep.water_cholorin = 760
+        self.ep.orp = 760
 
         self.ep.button_next_event(self.ep.BUTTON_NEXT_PIN)
 

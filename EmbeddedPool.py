@@ -28,7 +28,7 @@ class EmbeddedPool:
     PH_SENSOR_PIN = 0
     TURBIDITY_SENSOR_PIN = 1
     ENV_LIGHT_SENSOR_PIN = 2
-    CHOLORIN_SENSOR_PIN = 3
+    ORP_SENSOR_PIN = 3
 
     # Servo motor stuff
     DC_OPEN = (180 / 18) + 2
@@ -41,8 +41,8 @@ class EmbeddedPool:
     HUMIDITY_MAX = 29.94
     PH_MIN = 7.2
     PH_MAX = 7.6
-    CHLORINE_MIN = 1
-    CHLORINE_MAX = 1.5
+    ORP_MIN = 750
+    ORP_MAX = 770
     TURBIDITY_MIN = 0
     TURBIDITY_MAX = 0.5
     LUX_MIN = 200
@@ -98,7 +98,7 @@ class EmbeddedPool:
         self.correct_humidity = None
         self.correct_environment_temperature = None
         self.is_acceptable_ph = None
-        self.is_acceptable_cholorin = None
+        self.is_acceptable_orp = None
         self.is_acceptable_turbidity = None
         self.is_acceptable_light = None
 
@@ -110,7 +110,7 @@ class EmbeddedPool:
         self.humidity = None
         self.environment_temperature = None
         self.water_ph = None
-        self.water_cholorin = None
+        self.orp = None
         self.water_turbidity = None
         self.environment_light = None
 
@@ -170,21 +170,23 @@ class EmbeddedPool:
             self.water_ph, self.is_acceptable_ph
         )
 
-    def check_cholorin_level(self) -> None:
-        logging.info("START check_chlorine_level")
-        voltage = self.ads1115.read_voltage(self.CHOLORIN_SENSOR_PIN)
-        orp_value = ((30 * voltage * 1000) - (voltage * 1000))
-        self.water_cholorin = int(orp_value)
+    def check_orp(self) -> None:
+        logging.info("START check_orp")
+        voltage = self.ads1115.read_voltage(self.ORP_SENSOR_PIN)
+        voltage = voltage / 1000  # from mV to V
+        system_voltage = 5.00
+        offset = 0
 
-        if orp_value > self.CHLORINE_MAX:
-            self.is_acceptable_cholorin = False
-        elif orp_value <= self.CHLORINE_MIN:
-            self.is_acceptable_cholorin = False
-        elif self.CHLORINE_MIN <= orp_value < self.CHLORINE_MAX:
-            self.is_acceptable_cholorin = True
+        self.orp = int(((30 * system_voltage * 1000) - (75 * voltage * 1000)) / 75 - offset)
+        print(self.orp)
+
+        if self.ORP_MIN <= self.orp <= self.ORP_MAX:
+            self.is_acceptable_orp = True
+        else:
+            self.is_acceptable_orp = False
         logging.info(
-            "END   check_chlorine_level (value = %.2f mV, correct = %s)",
-            orp_value, self.is_acceptable_cholorin
+            "END   check_orp (value = %.2f mV, correct = %s)",
+            self.orp, self.is_acceptable_orp
         )
 
     def check_turbidity(self) -> None:
@@ -272,7 +274,7 @@ class EmbeddedPool:
                                     f"Turb: {self.water_turbidity: >6.1f} NTU"
         elif self.current_screen == 2:
             self.current_lcd_text = f"pH: {self.water_ph: >12.2f}\n"\
-                                    f"ORP: {self.water_cholorin: >8} mV"
+                                    f"ORP: {self.orp: >8} mV"
         elif self.current_screen == 3:
             self.current_lcd_text = f"Light: {self.environment_light: >5} lux"
 

@@ -14,7 +14,7 @@ def loop():
 		embedded_system.check_water_temperature()
 		embedded_system.check_humidity_and_environment_temperature()
 		embedded_system.check_water_ph()
-		embedded_system.check_cholorin_level()
+		embedded_system.check_orp()
 		embedded_system.check_turbidity()
 		embedded_system.check_environment_light_level()
 
