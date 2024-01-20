@@ -310,7 +310,8 @@ class EmbeddedPool:
             self.current_lcd_text = f"pH: {self.water_ph: >12.2f}\n" \
                                     f"ORP: {self.orp: >8} mV"
         elif self.current_screen == 3:
-            self.current_lcd_text = f"Light: {self.environment_light: >5} lux"
+            water_level_text = "Water Level:  OK" if self.is_water_level_good else "Water Level: BAD"
+            self.current_lcd_text = f"Light: {self.environment_light: >5} lux\n{water_level_text}"
 
     def lcd_update(self):
         logging.info("START lcd_update")

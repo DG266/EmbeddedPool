@@ -380,13 +380,23 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual("pH:         7.28\nORP:      760 mV", self.ep.current_lcd_text)
 
-    def test_update_current_screen_text_on_screen_3(self):
+    def test_update_current_screen_text_on_screen_3_with_water_level_ok(self):
         self.ep.current_screen = 3
         self.ep.environment_light = 300
+        self.ep.is_water_level_good = True
 
         self.ep.update_current_screen_text()
 
-        self.assertEqual("Light:   300 lux", self.ep.current_lcd_text)
+        self.assertEqual("Light:   300 lux\nWater Level:  OK", self.ep.current_lcd_text)
+
+    def test_update_current_screen_text_on_screen_3_with_water_level_bad(self):
+        self.ep.current_screen = 3
+        self.ep.environment_light = 300
+        self.ep.is_water_level_good = False
+
+        self.ep.update_current_screen_text()
+
+        self.assertEqual("Light:   300 lux\nWater Level: BAD", self.ep.current_lcd_text)
 
     def test_button_prev_event_on_screen_0(self):
         # Remember that the default screen is screen 0, so it's not necessary
