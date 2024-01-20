@@ -51,7 +51,7 @@ class EmbeddedPool:
     LUX_MAX = 400
 
     FIRST_SCREEN = 0
-    LAST_SCREEN = 3
+    LAST_SCREEN = 4
 
     def __init__(self, log_level=None):
         if log_level == "Info":
@@ -301,17 +301,26 @@ class EmbeddedPool:
 
     def update_current_screen_text(self):
         if self.current_screen == 0:
-            self.current_lcd_text = f"EnvTmp: {self.environment_temperature: >6.2f}{chr(223)}C\n" \
-                                    f"Hum: {self.humidity: >10.2f}%"
+            warning_1 = " " if self.correct_environment_temperature else "#"
+            warning_2 = " " if self.correct_humidity else "#"
+            self.current_lcd_text = f"EnvTmp {self.environment_temperature: >5.2f}{chr(223)}C " + warning_1 + "\n" \
+                                    f"Hum {self.humidity: >9.2f}% " + warning_2
         elif self.current_screen == 1:
-            self.current_lcd_text = f"WatTmp: {self.water_temperature: >6.2f}{chr(223)}C\n" \
-                                    f"Turb: {self.water_turbidity: >6.1f} NTU"
-        elif self.current_screen == 2:
-            self.current_lcd_text = f"pH: {self.water_ph: >12.2f}\n" \
-                                    f"ORP: {self.orp: >8} mV"
-        elif self.current_screen == 3:
+            warning_1 = " " if self.correct_water_temperature else "#"
             water_level_text = "Water Level:  OK" if self.is_water_level_good else "Water Level: BAD"
-            self.current_lcd_text = f"Light: {self.environment_light: >5} lux\n{water_level_text}"
+            self.current_lcd_text = (f"WatTmp {self.water_temperature: >5.2f}{chr(223)}C " + warning_1 + "\n"
+                                     + water_level_text)
+        elif self.current_screen == 2:
+            warning_1 = " " if self.is_acceptable_ph else "#"
+            warning_2 = " " if self.is_acceptable_orp else "#"
+            self.current_lcd_text = f"pH {self.water_ph: >11.2f} " + warning_1 + "\n" \
+                                    f"ORP {self.orp: >7} mV " + warning_2
+        elif self.current_screen == 3:
+            warning = " " if self.is_acceptable_light else "#"
+            self.current_lcd_text = f"Env. Light      \n{self.environment_light: >10} lux " + warning
+        elif self.current_screen == 4:
+            warning = " " if self.is_acceptable_turbidity else "#"
+            self.current_lcd_text = f"Water Turbidity \n{self.water_turbidity: >10.2f} NTU " + warning
 
     def lcd_update(self):
         logging.info("START lcd_update")
