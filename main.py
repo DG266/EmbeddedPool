@@ -3,16 +3,27 @@ try:
 except ImportError:
 	import mock.GPIO as GPIO
 import time
+from datetime import datetime
 from EmbeddedPool import EmbeddedPool
 
 embedded_system = EmbeddedPool("Info")
 
 
 def loop():
+	check_interval = 5  # seconds
+	last_check_time = datetime.now()
+
+	embedded_system.check_water_temperature()
+	embedded_system.check_humidity_and_environment_temperature()
+
 	while True:
+		current_time = datetime.now()
+
 		# Read sensors
-		embedded_system.check_water_temperature()
-		embedded_system.check_humidity_and_environment_temperature()
+		if (current_time - last_check_time).seconds >= check_interval:
+			embedded_system.check_water_temperature()
+			embedded_system.check_humidity_and_environment_temperature()
+			last_check_time = current_time
 		embedded_system.check_water_ph()
 		embedded_system.check_orp()
 		embedded_system.check_turbidity()
@@ -24,7 +35,6 @@ def loop():
 		embedded_system.control_led()
 		embedded_system.lcd_update()
 
-		# time.sleep(0.25)
 		print("\n")
 
 
