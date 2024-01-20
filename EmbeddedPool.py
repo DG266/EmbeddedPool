@@ -208,7 +208,7 @@ class EmbeddedPool:
         # In clean water, the sensor reads 4.3/4.4 volts,
         # but, in that case, the formula above returns a negative NTU value.
         # The value of NTU cannot be negative, so we set it equal to zero.
-        if ntu_val <= 0:
+        if ntu_val < 0:
             self.water_turbidity = 0
         else:
             self.water_turbidity = ntu_val
@@ -225,7 +225,13 @@ class EmbeddedPool:
     def check_environment_light_level(self) -> None:
         logging.info("START check_environment_light_level")
         voltage = self.ads1115.read_voltage(self.ENV_LIGHT_SENSOR_PIN)
-        self.environment_light = int((((voltage - 206) * 358) / 1184) + 15)
+        lux_val = int((((voltage - 206) * 358) / 1184) + 15)  # This formula is not very good
+
+        # Cannot be negative
+        if lux_val < 0:
+            self.environment_light = 0
+        else:
+            self.environment_light = lux_val
 
         if self.LUX_MIN <= self.environment_light <= self.LUX_MAX:
             self.is_acceptable_light = True
@@ -247,10 +253,10 @@ class EmbeddedPool:
 
     def control_windows(self) -> None:
         logging.info("START control_windows")
-        if not self.correct_humidity and not self.are_windows_open:
+        if (self.humidity > self.HUMIDITY_MAX) and not self.are_windows_open:
             self.change_servo_angle(self.DC_OPEN)
             self.are_windows_open = True
-        elif self.correct_humidity and self.are_windows_open:
+        elif (self.humidity <= self.HUMIDITY_MAX) and self.are_windows_open:
             self.change_servo_angle(self.DC_CLOSED)
             self.are_windows_open = False
         logging.info("END   control_windows (are_windows_open = %s)", self.are_windows_open)

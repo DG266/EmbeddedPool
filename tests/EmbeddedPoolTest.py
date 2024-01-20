@@ -5,6 +5,7 @@ except ImportError:
     import mock.GPIO as GPIO
     import mock.Adafruit_DHT as Adafruit_DHT
 import unittest
+from unittest.mock import call
 from LCDError import LCDError
 from DHTError import DHTError
 from unittest.mock import patch
@@ -17,6 +18,7 @@ class MyTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.ep = EmbeddedPool()
 
+    ''' WATER TEMPERATURE TESTS #################################################################################### '''
     @patch.object(DS18B20, "read_temp")
     def test_check_water_temperature_with_good_temperature(self, mock_read_temp):
         mock_read_temp.return_value = 26.00
@@ -33,6 +35,31 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(False, self.ep.correct_water_temperature)
 
+    @patch.object(DS18B20, "read_temp")
+    def test_check_water_temperature_with_temperature_too_low(self, mock_read_temp):
+        mock_read_temp.return_value = 18.00
+
+        self.ep.check_water_temperature()
+
+        self.assertEqual(False, self.ep.correct_water_temperature)
+
+    @patch.object(DS18B20, "read_temp")
+    def test_check_water_temperature_with_max_temperature(self, mock_read_temp):
+        mock_read_temp.return_value = self.ep.WATER_TEMP_MAX
+
+        self.ep.check_water_temperature()
+
+        self.assertEqual(True, self.ep.correct_water_temperature)
+
+    @patch.object(DS18B20, "read_temp")
+    def test_check_water_temperature_with_min_temperature(self, mock_read_temp):
+        mock_read_temp.return_value = self.ep.WATER_TEMP_MIN
+
+        self.ep.check_water_temperature()
+
+        self.assertEqual(True, self.ep.correct_water_temperature)
+
+    ''' ENV. TEMP. + HUMIDITY TESTS ################################################################################ '''
     @patch.object(Adafruit_DHT, "read_retry")
     @patch.object(DS18B20, "read_temp")
     def test_check_environment_temperature_and_humidity_with_both_correct(self, mock_read_temp, mock_read_retry):
@@ -101,6 +128,7 @@ class MyTestCase(unittest.TestCase):
 
         self.assertRaises(DHTError, self.ep.check_humidity_and_environment_temperature)
 
+    ''' pH TESTS ################################################################################################### '''
     @patch.object(ADS1115, "read_voltage")
     def test_check_water_ph_with_good_ph_value(self, mock_read_voltage):
         # IMPORTANT: if the voltage is 1450 mV, the pH will be 7.28 (which is good)
@@ -111,7 +139,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(True, self.ep.is_acceptable_ph)
 
     @patch.object(ADS1115, "read_voltage")
-    def test_check_water_ph_with_bad_ph_value(self, mock_read_voltage):
+    def test_check_water_ph_with_too_low_ph_value(self, mock_read_voltage):
         # IMPORTANT: if the voltage is 2000 mV, the pH will be 4.18 (which is bad)
         mock_read_voltage.return_value = 2000
 
@@ -120,7 +148,18 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(False, self.ep.is_acceptable_ph)
 
     @patch.object(ADS1115, "read_voltage")
+    def test_check_water_ph_with_too_high_ph_value(self, mock_read_voltage):
+        # IMPORTANT: if the voltage is 500 mV, the pH will be 12.63 (which is bad)
+        mock_read_voltage.return_value = 500
+
+        self.ep.check_water_ph()
+
+        self.assertEqual(False, self.ep.is_acceptable_ph)
+
+    ''' ORP/CHLORINE TESTS ######################################################################################### '''
+    @patch.object(ADS1115, "read_voltage")
     def test_check_orp_with_good_orp(self, mock_read_voltage):
+        # 1230 mV -> 770 mV (ORP)
         mock_read_voltage.return_value = 1230
 
         self.ep.check_orp()
@@ -128,30 +167,92 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(True, self.ep.is_acceptable_orp)
 
     @patch.object(ADS1115, "read_voltage")
-    def test_check_orp_with_bad_orp(self, mock_read_voltage):
+    def test_check_orp_with_too_low_orp(self, mock_read_voltage):
+        # 2000 mV -> 0 mV (ORP)
         mock_read_voltage.return_value = 2000
 
         self.ep.check_orp()
 
         self.assertEqual(False, self.ep.is_acceptable_orp)
 
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_orp_with_too_high_orp(self, mock_read_voltage):
+        # 800 mV -> 1200 mV (ORP)
+        mock_read_voltage.return_value = 800
+
+        self.ep.check_orp()
+
+        self.assertEqual(False, self.ep.is_acceptable_orp)
+
+    ''' WATER TURBIDITY TESTS ###################################################################################### '''
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_turbidity_with_good_turbidity(self, mock_read_voltage):
+        # 4300 mV -> O NTU
+        mock_read_voltage.return_value = 4300
+
+        self.ep.check_turbidity()
+
+        self.assertEqual(True, self.ep.is_acceptable_turbidity)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_turbidity_with_too_high_turbidity(self, mock_read_voltage):
+        # 2500 mV -> 3000.35 NTU
+        mock_read_voltage.return_value = 2500
+
+        self.ep.check_turbidity()
+
+        self.assertEqual(False, self.ep.is_acceptable_turbidity)
+
+    ''' ENVIRONMENT LIGHT TESTS #################################################################################### '''
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_environment_light_level_with_good_lighting(self, mock_read_voltage):
+        # 1390 mV -> 373 lux
+        mock_read_voltage.return_value = 1390
+
+        self.ep.check_environment_light_level()
+
+        self.assertEqual(True, self.ep.is_acceptable_light)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_environment_light_level_with_too_low_lighting(self, mock_read_voltage):
+        # 0 mV -> 0 lux
+        mock_read_voltage.return_value = 0
+
+        self.ep.check_environment_light_level()
+
+        self.assertEqual(False, self.ep.is_acceptable_light)
+
+    @patch.object(ADS1115, "read_voltage")
+    def test_check_environment_light_level_with_too_high_lighting(self, mock_read_voltage):
+        # 4930 mV -> 1443 lux
+        mock_read_voltage.return_value = 4930
+
+        self.ep.check_environment_light_level()
+
+        self.assertEqual(False, self.ep.is_acceptable_light)
+
+    ''' WATER LEVEL TESTS ########################################################################################## '''
+    @patch.object(GPIO, "input")
+    def test_check_water_level_with_correct_level(self, mock_input):
+        mock_input.return_value = 1
+
+        self.ep.check_water_level()
+
+        self.assertEqual(True, self.ep.is_water_level_good)
+
+    @patch.object(GPIO, "input")
+    def test_check_water_level_with_wrong_level(self, mock_input):
+        mock_input.return_value = 0
+
+        self.ep.check_water_level()
+
+        self.assertEqual(False, self.ep.is_water_level_good)
+
+    ''' SERVO MOTOR TESTS ########################################################################################## '''
+    @patch.object(GPIO, "output")
     @patch.object(Adafruit_DHT, "read_retry")
     @patch.object(DS18B20, "read_temp")
-    def test_control_windows_with_humidity_too_high(self, mock_read_temp, mock_read_retry):
-        # Water temperature
-        mock_read_temp.return_value = 26.00
-        # Adafruit_DHT.read_retry returns (humidity, temperature)
-        mock_read_retry.return_value = [31.50, 28.00]
-
-        self.ep.check_water_temperature()
-        self.ep.check_humidity_and_environment_temperature()
-        self.ep.control_windows()
-
-        self.assertEqual(True, self.ep.are_windows_open)
-
-    @patch.object(Adafruit_DHT, "read_retry")
-    @patch.object(DS18B20, "read_temp")
-    def test_control_windows_with_good_humidity(self, mock_read_temp, mock_read_retry):
+    def test_control_windows_with_good_humidity(self, mock_read_temp, mock_read_retry, mock_output):
         # Water temperature
         mock_read_temp.return_value = 26.00
         # Adafruit_DHT.read_retry returns (humidity, temperature)
@@ -161,48 +262,43 @@ class MyTestCase(unittest.TestCase):
         self.ep.check_humidity_and_environment_temperature()
         self.ep.control_windows()
 
+        mock_output.assert_not_called()
         self.assertEqual(False, self.ep.are_windows_open)
 
-    @patch.object(ADS1115, "read_voltage")
-    def test_check_turbidity_with_good_turbidity(self, mock_read_voltage):
-        mock_read_voltage.return_value = 4300
+    @patch.object(GPIO, "output")
+    @patch.object(Adafruit_DHT, "read_retry")
+    @patch.object(DS18B20, "read_temp")
+    def test_control_windows_with_humidity_too_high(self, mock_read_temp, mock_read_retry, mock_output):
+        # Water temperature
+        mock_read_temp.return_value = 26.00
+        # Adafruit_DHT.read_retry returns (humidity, temperature)
+        mock_read_retry.return_value = [31.50, 28.00]
 
-        self.ep.check_turbidity()
+        self.ep.check_water_temperature()
+        self.ep.check_humidity_and_environment_temperature()
+        self.ep.control_windows()
 
-        self.assertEqual(True, self.ep.is_acceptable_turbidity)
+        calls = [call(self.ep.SERVO_PIN, GPIO.HIGH), call(self.ep.SERVO_PIN, GPIO.LOW)]
+        mock_output.assert_has_calls(calls, any_order=True)
+        self.assertEqual(True, self.ep.are_windows_open)
 
-    @patch.object(ADS1115, "read_voltage")
-    def test_check_turbidity_with_bad_turbidity(self, mock_read_voltage):
-        mock_read_voltage.return_value = 2500
+    @patch.object(GPIO, "output")
+    @patch.object(Adafruit_DHT, "read_retry")
+    @patch.object(DS18B20, "read_temp")
+    def test_control_windows_with_humidity_too_low(self, mock_read_temp, mock_read_retry, mock_output):
+        # Water temperature
+        mock_read_temp.return_value = 26.00
+        # Adafruit_DHT.read_retry returns (humidity, temperature)
+        mock_read_retry.return_value = [24.00, 28.00]
 
-        self.ep.check_turbidity()
+        self.ep.check_water_temperature()
+        self.ep.check_humidity_and_environment_temperature()
+        self.ep.control_windows()
 
-        self.assertEqual(False, self.ep.is_acceptable_turbidity)
+        mock_output.assert_not_called()
+        self.assertEqual(False, self.ep.are_windows_open)
 
-    @patch.object(ADS1115, "read_voltage")
-    def test_check_environment_light_level_with_good_lighting(self, mock_read_voltage):
-        mock_read_voltage.return_value = 1390
-
-        self.ep.check_environment_light_level()
-
-        self.assertEqual(True, self.ep.is_acceptable_light)
-
-    @patch.object(ADS1115, "read_voltage")
-    def test_check_environment_light_level_with_too_low_lighting(self, mock_read_voltage):
-        mock_read_voltage.return_value = 0
-
-        self.ep.check_environment_light_level()
-
-        self.assertEqual(False, self.ep.is_acceptable_light)
-
-    @patch.object(ADS1115, "read_voltage")
-    def test_check_environment_light_level_with_too_high_lighting(self, mock_read_voltage):
-        mock_read_voltage.return_value = 4930
-
-        self.ep.check_environment_light_level()
-
-        self.assertEqual(False, self.ep.is_acceptable_light)
-
+    ''' LED TESTS ################################################################################################## '''
     @patch.object(ADS1115, "read_voltage")
     @patch.object(GPIO, "output")
     def test_control_led_with_correct_lighting(self, mock_output, mock_read_voltage):
@@ -363,19 +459,3 @@ class MyTestCase(unittest.TestCase):
         self.ep.button_next_event(self.ep.BUTTON_NEXT_PIN)
 
         self.assertEqual(0, self.ep.current_screen)
-
-    @patch.object(GPIO, "input")
-    def test_check_water_level_with_correct_level(self, mock_input):
-        mock_input.return_value = 1
-
-        self.ep.check_water_level()
-
-        self.assertEqual(True, self.ep.is_water_level_good)
-
-    @patch.object(GPIO, "input")
-    def test_check_water_level_with_wrong_level(self, mock_input):
-        mock_input.return_value = 0
-
-        self.ep.check_water_level()
-
-        self.assertEqual(False, self.ep.is_water_level_good)
