@@ -25,7 +25,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_water_temperature()
 
-        self.assertEqual(True, self.ep.correct_water_temperature)
+        self.assertTrue(self.ep.correct_water_temperature)
 
     @patch.object(DS18B20, "read_temp")
     def test_check_water_temperature_with_temperature_too_high(self, mock_read_temp):
@@ -33,7 +33,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_water_temperature()
 
-        self.assertEqual(False, self.ep.correct_water_temperature)
+        self.assertFalse(self.ep.correct_water_temperature)
 
     @patch.object(DS18B20, "read_temp")
     def test_check_water_temperature_with_temperature_too_low(self, mock_read_temp):
@@ -41,7 +41,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_water_temperature()
 
-        self.assertEqual(False, self.ep.correct_water_temperature)
+        self.assertFalse(self.ep.correct_water_temperature)
 
     @patch.object(DS18B20, "read_temp")
     def test_check_water_temperature_with_max_temperature(self, mock_read_temp):
@@ -49,7 +49,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_water_temperature()
 
-        self.assertEqual(True, self.ep.correct_water_temperature)
+        self.assertTrue(self.ep.correct_water_temperature)
 
     @patch.object(DS18B20, "read_temp")
     def test_check_water_temperature_with_min_temperature(self, mock_read_temp):
@@ -57,7 +57,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_water_temperature()
 
-        self.assertEqual(True, self.ep.correct_water_temperature)
+        self.assertTrue(self.ep.correct_water_temperature)
 
     ''' ENV. TEMP. + HUMIDITY TESTS ################################################################################ '''
     @patch.object(Adafruit_DHT, "read_retry")
@@ -71,8 +71,8 @@ class MyTestCase(unittest.TestCase):
         self.ep.check_water_temperature()
         self.ep.check_humidity_and_environment_temperature()
 
-        self.assertEqual(True, self.ep.correct_humidity)
-        self.assertEqual(True, self.ep.correct_environment_temperature)
+        self.assertTrue(self.ep.correct_humidity)
+        self.assertTrue(self.ep.correct_environment_temperature)
 
     @patch.object(Adafruit_DHT, "read_retry")
     @patch.object(DS18B20, "read_temp")
@@ -85,8 +85,8 @@ class MyTestCase(unittest.TestCase):
         self.ep.check_water_temperature()
         self.ep.check_humidity_and_environment_temperature()
 
-        self.assertEqual(False, self.ep.correct_humidity)
-        self.assertEqual(False, self.ep.correct_environment_temperature)
+        self.assertFalse(self.ep.correct_humidity)
+        self.assertFalse(self.ep.correct_environment_temperature)
 
     @patch.object(Adafruit_DHT, "read_retry")
     @patch.object(DS18B20, "read_temp")
@@ -99,8 +99,8 @@ class MyTestCase(unittest.TestCase):
         self.ep.check_water_temperature()
         self.ep.check_humidity_and_environment_temperature()
 
-        self.assertEqual(False, self.ep.correct_humidity)
-        self.assertEqual(True, self.ep.correct_environment_temperature)
+        self.assertFalse(self.ep.correct_humidity)
+        self.assertTrue(self.ep.correct_environment_temperature)
 
     @patch.object(Adafruit_DHT, "read_retry")
     @patch.object(DS18B20, "read_temp")
@@ -113,8 +113,8 @@ class MyTestCase(unittest.TestCase):
         self.ep.check_water_temperature()
         self.ep.check_humidity_and_environment_temperature()
 
-        self.assertEqual(True, self.ep.correct_humidity)
-        self.assertEqual(False, self.ep.correct_environment_temperature)
+        self.assertTrue(self.ep.correct_humidity)
+        self.assertFalse(self.ep.correct_environment_temperature)
 
     @patch.object(Adafruit_DHT, "read_retry")
     @patch.object(DS18B20, "read_temp")
@@ -136,7 +136,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_water_ph()
 
-        self.assertEqual(True, self.ep.is_acceptable_ph)
+        self.assertTrue(self.ep.is_acceptable_ph)
 
     @patch.object(ADS1115, "read_voltage")
     def test_check_water_ph_with_too_low_ph_value(self, mock_read_voltage):
@@ -145,7 +145,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_water_ph()
 
-        self.assertEqual(False, self.ep.is_acceptable_ph)
+        self.assertFalse(self.ep.is_acceptable_ph)
 
     @patch.object(ADS1115, "read_voltage")
     def test_check_water_ph_with_too_high_ph_value(self, mock_read_voltage):
@@ -154,7 +154,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_water_ph()
 
-        self.assertEqual(False, self.ep.is_acceptable_ph)
+        self.assertFalse(self.ep.is_acceptable_ph)
 
     ''' ORP/CHLORINE TESTS ######################################################################################### '''
     @patch.object(ADS1115, "read_voltage")
@@ -164,7 +164,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_orp()
 
-        self.assertEqual(True, self.ep.is_acceptable_orp)
+        self.assertTrue(self.ep.is_acceptable_orp)
 
     @patch.object(ADS1115, "read_voltage")
     def test_check_orp_with_too_low_orp(self, mock_read_voltage):
@@ -173,7 +173,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_orp()
 
-        self.assertEqual(False, self.ep.is_acceptable_orp)
+        self.assertFalse(self.ep.is_acceptable_orp)
 
     @patch.object(ADS1115, "read_voltage")
     def test_check_orp_with_too_high_orp(self, mock_read_voltage):
@@ -182,7 +182,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_orp()
 
-        self.assertEqual(False, self.ep.is_acceptable_orp)
+        self.assertFalse(self.ep.is_acceptable_orp)
 
     ''' WATER TURBIDITY TESTS ###################################################################################### '''
     @patch.object(ADS1115, "read_voltage")
@@ -192,7 +192,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_turbidity()
 
-        self.assertEqual(True, self.ep.is_acceptable_turbidity)
+        self.assertTrue(self.ep.is_acceptable_turbidity)
 
     @patch.object(ADS1115, "read_voltage")
     def test_check_turbidity_with_too_high_turbidity(self, mock_read_voltage):
@@ -201,7 +201,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_turbidity()
 
-        self.assertEqual(False, self.ep.is_acceptable_turbidity)
+        self.assertFalse(self.ep.is_acceptable_turbidity)
 
     ''' ENVIRONMENT LIGHT TESTS #################################################################################### '''
     @patch.object(ADS1115, "read_voltage")
@@ -211,7 +211,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_environment_light_level()
 
-        self.assertEqual(True, self.ep.is_acceptable_light)
+        self.assertTrue(self.ep.is_acceptable_light)
 
     @patch.object(ADS1115, "read_voltage")
     def test_check_environment_light_level_with_too_low_lighting(self, mock_read_voltage):
@@ -220,7 +220,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_environment_light_level()
 
-        self.assertEqual(False, self.ep.is_acceptable_light)
+        self.assertFalse(self.ep.is_acceptable_light)
 
     @patch.object(ADS1115, "read_voltage")
     def test_check_environment_light_level_with_too_high_lighting(self, mock_read_voltage):
@@ -229,7 +229,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_environment_light_level()
 
-        self.assertEqual(False, self.ep.is_acceptable_light)
+        self.assertFalse(self.ep.is_acceptable_light)
 
     ''' WATER LEVEL TESTS ########################################################################################## '''
     @patch.object(GPIO, "input")
@@ -238,7 +238,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_water_level()
 
-        self.assertEqual(True, self.ep.is_water_level_good)
+        self.assertTrue(self.ep.is_water_level_good)
 
     @patch.object(GPIO, "input")
     def test_check_water_level_with_wrong_level(self, mock_input):
@@ -246,7 +246,7 @@ class MyTestCase(unittest.TestCase):
 
         self.ep.check_water_level()
 
-        self.assertEqual(False, self.ep.is_water_level_good)
+        self.assertFalse(self.ep.is_water_level_good)
 
     ''' SERVO MOTOR TESTS ########################################################################################## '''
     @patch.object(GPIO, "output")
@@ -263,7 +263,7 @@ class MyTestCase(unittest.TestCase):
         self.ep.control_windows()
 
         mock_output.assert_not_called()
-        self.assertEqual(False, self.ep.are_windows_open)
+        self.assertFalse(self.ep.are_windows_open)
 
     @patch.object(GPIO, "output")
     @patch.object(Adafruit_DHT, "read_retry")
@@ -280,7 +280,7 @@ class MyTestCase(unittest.TestCase):
 
         calls = [call(self.ep.SERVO_PIN, GPIO.HIGH), call(self.ep.SERVO_PIN, GPIO.LOW)]
         mock_output.assert_has_calls(calls, any_order=True)
-        self.assertEqual(True, self.ep.are_windows_open)
+        self.assertTrue(self.ep.are_windows_open)
 
     @patch.object(GPIO, "output")
     @patch.object(Adafruit_DHT, "read_retry")
@@ -296,7 +296,7 @@ class MyTestCase(unittest.TestCase):
         self.ep.control_windows()
 
         mock_output.assert_not_called()
-        self.assertEqual(False, self.ep.are_windows_open)
+        self.assertFalse(self.ep.are_windows_open)
 
     ''' LED TESTS ################################################################################################## '''
     @patch.object(ADS1115, "read_voltage")
@@ -308,7 +308,7 @@ class MyTestCase(unittest.TestCase):
         self.ep.control_led()
 
         mock_output.assert_called_once_with(self.ep.LED_PIN, GPIO.LOW)
-        self.assertEqual(False, self.ep.is_led_on)
+        self.assertFalse(self.ep.is_led_on)
 
     @patch.object(ADS1115, "read_voltage")
     @patch.object(GPIO, "output")
@@ -319,7 +319,7 @@ class MyTestCase(unittest.TestCase):
         self.ep.control_led()
 
         mock_output.assert_called_once_with(self.ep.LED_PIN, GPIO.HIGH)
-        self.assertEqual(True, self.ep.is_led_on)
+        self.assertTrue(self.ep.is_led_on)
 
     @patch.object(ADS1115, "read_voltage")
     @patch.object(GPIO, "output")
@@ -330,13 +330,13 @@ class MyTestCase(unittest.TestCase):
         self.ep.control_led()
 
         mock_output.assert_called_once_with(self.ep.LED_PIN, GPIO.LOW)
-        self.assertEqual(False, self.ep.is_led_on)
+        self.assertFalse(self.ep.is_led_on)
 
     ''' LCD SCREEN + BUTTONS TESTS ################################################################################# '''
     def test_turn_on_lcd_backlight(self):
         self.ep.turn_on_lcd_backlight()
 
-        self.assertEqual(True, self.ep.is_lcd_backlight_on)
+        self.assertTrue(self.ep.is_lcd_backlight_on)
 
     def test_turn_on_lcd_backlight_when_it_is_already_on(self):
         self.ep.turn_on_lcd_backlight()
@@ -347,7 +347,7 @@ class MyTestCase(unittest.TestCase):
         self.ep.turn_on_lcd_backlight()
         self.ep.turn_off_lcd_backlight()
 
-        self.assertEqual(False, self.ep.is_lcd_backlight_on)
+        self.assertFalse(self.ep.is_lcd_backlight_on)
 
     def test_turn_off_lcd_backlight_when_it_is_already_off(self):
         self.assertRaises(LCDError, self.ep.turn_off_lcd_backlight)
