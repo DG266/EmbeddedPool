@@ -279,7 +279,7 @@ class MyTestCase(unittest.TestCase):
         self.ep.control_windows()
 
         calls = [call(self.ep.SERVO_PIN, GPIO.HIGH), call(self.ep.SERVO_PIN, GPIO.LOW)]
-        mock_output.assert_has_calls(calls, any_order=True)
+        mock_output.assert_has_calls(calls, any_order=False)
         self.assertTrue(self.ep.are_windows_open)
 
     @patch.object(GPIO, "output")
@@ -296,6 +296,29 @@ class MyTestCase(unittest.TestCase):
         self.ep.control_windows()
 
         mock_output.assert_not_called()
+        self.assertFalse(self.ep.are_windows_open)
+
+    @patch.object(GPIO, "output")
+    @patch.object(Adafruit_DHT, "read_retry")
+    @patch.object(DS18B20, "read_temp")
+    def test_control_windows_from_wrong_humidity_to_good_humidity(self, mock_read_temp, mock_read_retry, mock_output):
+        # Water temperature
+        mock_read_temp.side_effect = [26.00, 26.50]
+        # Adafruit_DHT.read_retry returns (humidity, temperature)
+        mock_read_retry.side_effect = [[31.50, 28.00], [29.00, 28.20]]
+
+        # Wrong humidity -> Open windows
+        self.ep.check_water_temperature()
+        self.ep.check_humidity_and_environment_temperature()
+        self.ep.control_windows()
+        # Good humidity -> Close windows
+        self.ep.check_water_temperature()
+        self.ep.check_humidity_and_environment_temperature()
+        self.ep.control_windows()
+
+        calls = [call(self.ep.SERVO_PIN, GPIO.HIGH), call(self.ep.SERVO_PIN, GPIO.LOW),
+                 call(self.ep.SERVO_PIN, GPIO.HIGH), call(self.ep.SERVO_PIN, GPIO.LOW)]
+        mock_output.assert_has_calls(calls, any_order=False)
         self.assertFalse(self.ep.are_windows_open)
 
     ''' LED TESTS ################################################################################################## '''
